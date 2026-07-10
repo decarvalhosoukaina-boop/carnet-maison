@@ -26,6 +26,13 @@ const db = {
     });
     return res.json();
   },
+  async update(table, id, data) {
+    await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
+      method: "PATCH",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  },
   async delete(table, id) {
     await fetch(`${SUPABASE_URL}/rest/v1/${table}?id=eq.${id}`, {
       method: "DELETE",
@@ -956,6 +963,8 @@ export default function BatchCooking() {
   const [savedShoppingLists, setSavedShoppingLists] = useState([]);
   const [viewingShoppingList, setViewingShoppingList] = useState(null);
   const [ambiguousPoultry, setAmbiguousPoultry] = useState(null);
+  const [editingRecipe, setEditingRecipe] = useState(null); // recipe being edited
+  const [confirmDelete, setConfirmDelete] = useState(null); // { type: "recipe"|"list", item }
   // weekStatus tracks where the person is in the real-life journey:
   // "planning" -> choosing recipes, "shopping" -> list generated, waiting to shop,
   // "cooking" -> groceries done, ready to batch cook, "idle" -> nothing active
@@ -1249,6 +1258,113 @@ export default function BatchCooking() {
           );
         })()}
 
+        {/* CONFIRM DELETE MODAL */}
+        {confirmDelete && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(43,38,34,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+            <div style={{ background: COLORS.card, borderRadius: 16, padding: 28, maxWidth: 360, width: "100%", border: `1px solid ${COLORS.line}` }}>
+              <h2 style={{ margin: "0 0 8px", fontSize: 19, fontWeight: 500, fontFamily: "Georgia, serif" }}>
+                {confirmDelete.type === "recipe" ? "Supprimer la recette ?" : "Supprimer la liste ?"}
+              </h2>
+              <p style={{ fontSize: 14, color: COLORS.inkMuted, marginBottom: 24, lineHeight: 1.5 }}>
+                {confirmDelete.type === "recipe"
+                  ? `"${confirmDelete.item.name}" sera supprimée définitivement.`
+                  : `"${confirmDelete.item.label}" sera supprimée de l'historique.`}
+              </p>
+              <button onClick={async () => {
+                if (confirmDelete.type === "recipe") {
+                  setRecipes(prev => prev.filter(r => r.id !== confirmDelete.item.id));
+                  setSelected(prev => prev.filter(r => r.id !== confirmDelete.item.id));
+                  setDetailRecipe(null);
+                  try { await db.delete("recipes", confirmDelete.item.id); } catch(e) {}
+                } else {
+                  setSavedShoppingLists(prev => prev.filter(l => l.label !== confirmDelete.item.label));
+                  try { await db.delete("shopping_lists", confirmDelete.item.dbId); } catch(e) {}
+                }
+                setConfirmDelete(null);
+              }} style={{
+                width: "100%", padding: 13, borderRadius: 10, border: "none",
+                background: "#c0392b", color: "#fff", fontWeight: 500, fontSize: 14, cursor: "pointer", marginBottom: 8,
+              }}>Supprimer définitivement</button>
+              <button onClick={() => setConfirmDelete(null)} style={{
+                width: "100%", padding: 13, borderRadius: 10, border: `1px solid ${COLORS.line}`,
+                background: "transparent", color: COLORS.inkSoft, fontWeight: 500, fontSize: 14, cursor: "pointer",
+              }}>Annuler</button>
+            </div>
+          </div>
+        )}
+
+        {/* EDIT RECIPE MODAL */}
+        {editingRecipe && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(43,38,34,0.6)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+            <div style={{ background: COLORS.cream, borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 600, maxHeight: "90vh", overflowY: "auto", padding: "24px 22px 32px", border: `1px solid ${COLORS.line}`, borderBottom: "none" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500, fontFamily: "Georgia, serif" }}>Modifier la recette</h2>
+                <button onClick={() => setEditingRecipe(null)} style={{ background: "transparent", border: `1px solid ${COLORS.line}`, borderRadius: "50%", width: 32, height: 32, fontSize: 16, cursor: "pointer", color: COLORS.inkSoft }}>×</button>
+              </div>
+
+              {[
+                { label: "Nom", key: "name", placeholder: "Ex. Blanquette de poulet" },
+                { label: "Sous-titre", key: "subtitle", placeholder: "Ex. Crémeuse, riz vapeur" },
+                { label: "Catégorie", key: "category", placeholder: "Ex. Poulet, Boeuf..." },
+              ].map(({ label, key, placeholder }) => (
+                <div key={key} style={{ marginBottom: 14 }}>
+                  <label style={{ fontSize: 13, fontWeight: 500, color: COLORS.inkSoft, display: "block", marginBottom: 5 }}>{label}</label>
+                  <input value={editingRecipe[key] || ""} onChange={e => setEditingRecipe(prev => ({ ...prev, [key]: e.target.value }))}
+                    placeholder={placeholder} style={{ width: "100%", padding: "10px 13px", borderRadius: 10, border: `1px solid ${COLORS.line}`, fontSize: 14, boxSizing: "border-box", background: COLORS.cream, fontFamily: "inherit" }} />
+                </div>
+              ))}
+
+              <div style={{ display: "flex", gap: 12, marginBottom: 14 }}>
+                {[{ label: "Prépa (min)", key: "prepTime" }, { label: "Cuisson (min)", key: "cookTime" }, { label: "Portions", key: "servings" }].map(({ label, key }) => (
+                  <div key={key} style={{ flex: 1 }}>
+                    <label style={{ fontSize: 12, fontWeight: 500, color: COLORS.inkSoft, display: "block", marginBottom: 5 }}>{label}</label>
+                    <input type="number" value={editingRecipe[key] || ""} onChange={e => setEditingRecipe(prev => ({ ...prev, [key]: Number(e.target.value) }))}
+                      style={{ width: "100%", padding: "10px 8px", borderRadius: 10, border: `1px solid ${COLORS.line}`, fontSize: 14, boxSizing: "border-box", background: COLORS.cream }} />
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ fontSize: 13, fontWeight: 500, color: COLORS.inkSoft, display: "block", marginBottom: 5 }}>Ingrédients (1 par ligne)</label>
+                <textarea rows={6} value={(editingRecipe.ingredients || []).map(i => `${i.qty}${i.unit} ${i.name}`).join("\n")}
+                  onChange={e => {
+                    const lines = e.target.value.split("\n").filter(Boolean).map(line => {
+                      const match = line.match(/^([\d.]+)\s*([a-zA-Zéèêàùûôîïçœæ]*)\s+(?:de\s+)?(.+)$/i);
+                      if (match) return { qty: parseFloat(match[1]), unit: match[2], name: match[3] };
+                      return { qty: 1, unit: "", name: line };
+                    });
+                    setEditingRecipe(prev => ({ ...prev, ingredients: lines }));
+                  }}
+                  style={{ width: "100%", padding: "10px 13px", borderRadius: 10, border: `1px solid ${COLORS.line}`, fontSize: 13, boxSizing: "border-box", resize: "vertical", background: COLORS.cream, fontFamily: "inherit" }} />
+              </div>
+
+              <div style={{ marginBottom: 22 }}>
+                <label style={{ fontSize: 13, fontWeight: 500, color: COLORS.inkSoft, display: "block", marginBottom: 5 }}>Étapes (1 par ligne)</label>
+                <textarea rows={6} value={(editingRecipe.steps || []).join("\n")}
+                  onChange={e => setEditingRecipe(prev => ({ ...prev, steps: e.target.value.split("\n").filter(Boolean) }))}
+                  style={{ width: "100%", padding: "10px 13px", borderRadius: 10, border: `1px solid ${COLORS.line}`, fontSize: 13, boxSizing: "border-box", resize: "vertical", background: COLORS.cream, fontFamily: "inherit" }} />
+              </div>
+
+              <button onClick={async () => {
+                setRecipes(prev => prev.map(r => r.id === editingRecipe.id ? editingRecipe : r));
+                setDetailRecipe(editingRecipe);
+                setEditingRecipe(null);
+                try {
+                  await db.update("recipes", editingRecipe.id, {
+                    name: editingRecipe.name, subtitle: editingRecipe.subtitle || "",
+                    category: editingRecipe.category, servings: editingRecipe.servings,
+                    prep_time: editingRecipe.prepTime, cook_time: editingRecipe.cookTime,
+                    ingredients: editingRecipe.ingredients, steps: editingRecipe.steps,
+                  });
+                } catch(e) { console.error("Update error:", e); }
+              }} style={{
+                width: "100%", padding: 14, borderRadius: 10, border: "none",
+                background: COLORS.terracotta, color: "#fff", fontWeight: 500, fontSize: 15, cursor: "pointer",
+              }}>Enregistrer les modifications</button>
+            </div>
+          </div>
+        )}
+
         {/* AMBIGUOUS POULTRY MODAL */}
         {ambiguousPoultry && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(43,38,34,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -1458,6 +1574,18 @@ export default function BatchCooking() {
                 }}>
                   {selected.find(r => r.id === detailRecipe.id) ? "Retirer du batch" : "Ajouter au batch"}
                 </button>
+
+                {/* Edit and delete buttons */}
+                <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                  <button onClick={() => { setEditingRecipe(detailRecipe); }} style={{
+                    flex: 1, padding: 12, borderRadius: 10, border: `1px solid ${COLORS.line}`,
+                    background: "transparent", color: COLORS.inkSoft, fontWeight: 500, fontSize: 14, cursor: "pointer",
+                  }}>✏️ Modifier</button>
+                  <button onClick={() => { setConfirmDelete({ type: "recipe", item: detailRecipe }); }} style={{
+                    flex: 1, padding: 12, borderRadius: 10, border: "1px solid #f5c6c6",
+                    background: "#fff5f5", color: "#c0392b", fontWeight: 500, fontSize: 14, cursor: "pointer",
+                  }}>🗑️ Supprimer</button>
+                </div>
               </div>
             </div>
           </div>
@@ -1972,16 +2100,21 @@ export default function BatchCooking() {
                       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                         {[...savedShoppingLists].reverse().map((entry, i) => {
                           const itemCount = Object.values(entry.list).reduce((sum, items) => sum + items.length, 0);
+                          const recipeNames = entry.recipes ? entry.recipes.map(r => typeof r === "string" ? r : r.name).join(", ") : "";
                           return (
-                            <div key={i} onClick={() => setViewingShoppingList(entry)} style={{
-                              background: COLORS.card, borderRadius: 14, padding: 18, border: `1px solid ${COLORS.line}`, cursor: "pointer",
+                            <div key={i} style={{
+                              background: COLORS.card, borderRadius: 14, padding: 18, border: `1px solid ${COLORS.line}`,
                               display: "flex", alignItems: "center", gap: 14,
                             }}>
-                              <div style={{ flex: 1 }}>
+                              <div onClick={() => setViewingShoppingList(entry)} style={{ flex: 1, cursor: "pointer" }}>
                                 <div style={{ fontWeight: 600, fontSize: 15, fontFamily: "Georgia, serif", marginBottom: 4 }}>{entry.label}</div>
-                                <div style={{ fontSize: 12, color: COLORS.inkMuted }}>{itemCount} article{itemCount > 1 ? "s" : ""} · {entry.recipes.join(", ")}</div>
+                                <div style={{ fontSize: 12, color: COLORS.inkMuted }}>{itemCount} article{itemCount > 1 ? "s" : ""} · {recipeNames}</div>
                               </div>
-                              <span style={{ color: COLORS.inkMuted, fontSize: 18 }}>›</span>
+                              <button onClick={e => { e.stopPropagation(); setConfirmDelete({ type: "list", item: entry }); }} style={{
+                                background: "#fff5f5", border: "1px solid #f5c6c6", borderRadius: 8,
+                                padding: "6px 10px", color: "#c0392b", fontSize: 13, cursor: "pointer",
+                              }}>🗑️</button>
+                              <span onClick={() => setViewingShoppingList(entry)} style={{ color: COLORS.inkMuted, fontSize: 18, cursor: "pointer" }}>›</span>
                             </div>
                           );
                         })}
