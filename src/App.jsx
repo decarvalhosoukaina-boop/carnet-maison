@@ -1325,14 +1325,20 @@ function PlanningView({ weekPlan, setWeekPlan, selected, COLORS }) {
     e.preventDefault();
   };
   React.useEffect(() => {
+    if (!dragging) return;
+    const dayRefsSnapshot = dayRefs.current;
+    const getDayFromPosLocal = (x, y) => ["Lun","Mar","Mer","Jeu","Ven"].find(day => {
+      const el = dayRefsSnapshot[day];
+      if (!el) return false;
+      const rect = el.getBoundingClientRect();
+      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+    }) || null;
     const onMove = e => {
-      if (!dragging) return;
       setDragPos({ x: e.clientX, y: e.clientY });
-      setOverDay(getDayFromPos(e.clientX, e.clientY));
+      setOverDay(getDayFromPosLocal(e.clientX, e.clientY));
     };
     const onUp = e => {
-      if (!dragging) return;
-      const day = getDayFromPos(e.clientX, e.clientY);
+      const day = getDayFromPosLocal(e.clientX, e.clientY);
       if (day) setWeekPlan(prev => ({ ...prev, [day]: dragging }));
       setDragging(null);
       setOverDay(null);
