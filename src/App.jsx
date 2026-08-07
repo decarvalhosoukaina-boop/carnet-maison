@@ -1288,6 +1288,7 @@ export default function BatchCooking() {
   const [showSauceBlanche, setShowSauceBlanche] = useState(false);
   const [restesSuggestion, setRestesSuggestion] = useState(null); // { tag, suggestions[] }
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [appReady, setAppReady] = useState(false);
   const [weekPlan, setWeekPlan] = useState({ Lun: null, Mar: null, Mer: null, Jeu: null, Ven: null });
   const [planPickingDay, setPlanPickingDay] = useState(null);
   const [showSuggestion, setShowSuggestion] = useState(false);
@@ -1422,8 +1423,6 @@ export default function BatchCooking() {
   }, []);
 
   // Auto-save current week state whenever key state changes
-  // Save current week to localStorage whenever key state changes
-  const [appReady, setAppReady] = useState(false);
   useEffect(() => {
     if (!appReady) return;
     const data = {
