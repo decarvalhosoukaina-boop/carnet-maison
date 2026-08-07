@@ -1275,7 +1275,7 @@ function ServingsControl({ value, onChange, compact }) {
   );
 }
 
-function PlanningView({ weekPlan, setWeekPlan, selected, COLORS }) {
+function PlanningView({ weekPlan, setWeekPlan, selected }) {
   const [pickingDay, setPickingDay] = React.useState(null);
   const days = ["Lun", "Mar", "Mer", "Jeu", "Ven"];
   const emoji = r => !r ? "🍽️" : r.category === "Poulet" ? "🍗" : r.category === "Boeuf" ? "🥩" : r.category === "Porc" ? "🐷" : r.category === "Rapide" ? "⚡" : "🍽️";
@@ -2722,7 +2722,7 @@ export default function BatchCooking() {
 
           {/* PLANNING VIEW */}
           {view === "planning" && (
-            <PlanningView weekPlan={weekPlan} setWeekPlan={setWeekPlan} selected={selected} COLORS={COLORS} />
+            <PlanningView weekPlan={weekPlan} setWeekPlan={setWeekPlan} selected={selected} />
           )}
 
           {/* HISTORY VIEW */}
