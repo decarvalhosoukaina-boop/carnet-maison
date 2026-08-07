@@ -1379,23 +1379,40 @@ export default function BatchCooking() {
         if (dbLists && dbLists.length > 0) {
           setSavedShoppingLists(dbLists.map(l => ({ label: l.label, date: l.date, recipes: l.recipes, list: l.list, dbId: l.id })));
         }
-        // Restore current week from localStorage
+        // Restore current week — Supabase d'abord, localStorage en fallback
+        let restored = false;
         try {
-          const raw = localStorage.getItem("carnet_current_week");
-          if (raw) {
-            const cw = JSON.parse(raw);
-            if (cw.weekStatus && cw.weekStatus !== "idle") {
-              setWeekStatus(cw.weekStatus);
-              if (cw.recipeServings) setRecipeServings(cw.recipeServings);
-              if (cw.ownedIngredients) setOwnedIngredients(cw.ownedIngredients);
-              if (cw.manualItems) setManualItems(cw.manualItems);
-              if (cw.activeShoppingList) setActiveShoppingList(cw.activeShoppingList);
-              if (cw.selectedIds && cw.selectedIds.length > 0) {
-                window.__pendingSelectedIds = cw.selectedIds;
-              }
-            }
+          const cw = await db.loadCurrentWeek();
+          if (cw && cw.week_status && cw.week_status !== "idle") {
+            setWeekStatus(cw.week_status);
+            if (cw.recipe_servings) setRecipeServings(cw.recipe_servings);
+            if (cw.owned_ingredients) setOwnedIngredients(cw.owned_ingredients);
+            if (cw.manual_items) setManualItems(cw.manual_items);
+            if (cw.active_shopping_list) setActiveShoppingList(cw.active_shopping_list);
+            if (cw.week_plan) setWeekPlan(cw.week_plan);
+            if (cw.selected_recipes && cw.selected_recipes.length > 0) setSelected(cw.selected_recipes);
+            restored = true;
           }
         } catch(e) {}
+        // Fallback localStorage si Supabase vide
+        if (!restored) {
+          try {
+            const raw = localStorage.getItem("carnet_current_week");
+            if (raw) {
+              const cw = JSON.parse(raw);
+              if (cw.weekStatus && cw.weekStatus !== "idle") {
+                setWeekStatus(cw.weekStatus);
+                if (cw.recipeServings) setRecipeServings(cw.recipeServings);
+                if (cw.ownedIngredients) setOwnedIngredients(cw.ownedIngredients);
+                if (cw.manualItems) setManualItems(cw.manualItems);
+                if (cw.activeShoppingList) setActiveShoppingList(cw.activeShoppingList);
+                if (cw.weekPlan) setWeekPlan(cw.weekPlan);
+                if (cw.selectedRecipes && cw.selectedRecipes.length > 0) setSelected(cw.selectedRecipes);
+                else if (cw.selectedIds && cw.selectedIds.length > 0) window.__pendingSelectedIds = cw.selectedIds;
+              }
+            }
+          } catch(e) {}
+        }
       } catch (e) {
         console.error("Supabase load error:", e);
       }
@@ -1412,10 +1429,26 @@ export default function BatchCooking() {
     const data = {
       weekStatus, recipeServings, ownedIngredients, manualItems,
       selectedIds: selected.map(r => r.id),
+      selectedRecipes: selected,
       activeShoppingList: activeShoppingList || null,
+      weekPlan,
     };
+    // Save to localStorage (fast, local)
     try { localStorage.setItem("carnet_current_week", JSON.stringify(data)); } catch(e) {}
-  }, [weekStatus, selected, recipeServings, activeShoppingList, ownedIngredients, manualItems, appReady]);
+    // Save to Supabase (persistent, cross-device) — debounced 1s
+    const timer = setTimeout(() => {
+      db.saveCurrentWeek({
+        week_status: weekStatus || "idle",
+        selected_recipes: selected,
+        recipe_servings: recipeServings,
+        active_shopping_list: activeShoppingList || null,
+        owned_ingredients: ownedIngredients,
+        manual_items: manualItems,
+        week_plan: weekPlan,
+      }).catch(e => console.error("Save error:", e));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [weekStatus, selected, recipeServings, activeShoppingList, ownedIngredients, manualItems, weekPlan, appReady]);
 
   const toggleSelect = (recipe) => {
     const isCurrentlySelected = selected.find((r) => r.id === recipe.id);
