@@ -143,7 +143,7 @@ const INITIAL_RECIPES = [
     prep: [
       { ingredient: "Oignons", action: "émincer" },
       { ingredient: "Ail", action: "écraser" },
-      { ingredient: "Persil", action: "hacher" },
+      { ingredient: "Persil", action: "ciseler" },
     ],
     assembly: [
       "Mélanger viandes, ricotta, parmesan, œufs et persil haché, former les boulettes",
@@ -189,7 +189,7 @@ const INITIAL_RECIPES = [
       { ingredient: "Paleron de bœuf", action: "couper en cubes de 60g" },
       { ingredient: "Carottes", action: "éplucher et tailler en biseaux" },
       { ingredient: "Oignons", action: "hacher" },
-      { ingredient: "Ail", action: "hacher" },
+      { ingredient: "Ail", action: "écraser" },
       { ingredient: "Poireau", action: "couper" },
       { ingredient: "Thym", action: "réserver en branches pour le bouquet garni" },
     ],
@@ -332,8 +332,8 @@ const INITIAL_RECIPES = [
       { name: "Parmesan râpé", qty: 1, unit: "poignée" },
     ],
     prep: [
-      { ingredient: "Oignons", action: "hacher finement" },
-      { ingredient: "Ail", action: "hacher finement" },
+      { ingredient: "Oignons", action: "écraser" },
+      { ingredient: "Ail", action: "écraser" },
       { ingredient: "Carottes", action: "râper finement" },
       { ingredient: "Courgette", action: "râper et bien essorer" },
     ],
@@ -422,7 +422,7 @@ const INITIAL_RECIPES = [
       { name: "Muscade", qty: 1, unit: "pincée" },
     ],
     prep: [
-      { ingredient: "Oignons", action: "hacher finement" },
+      { ingredient: "Oignons", action: "écraser" },
       { ingredient: "Ail", action: "écraser" },
       { ingredient: "Carottes", action: "râper finement" },
       { ingredient: "Persil", action: "ciseler" },
@@ -475,9 +475,9 @@ const INITIAL_RECIPES = [
     ],
     prep: [
       { ingredient: "Oignons", action: "émincer" },
-      { ingredient: "Ail", action: "hacher" },
+      { ingredient: "Ail", action: "écraser" },
       { ingredient: "Gingembre frais râpé", action: "râper" },
-      { ingredient: "Tiges de citronnelle émincées finement", action: "émincer très finement la partie blanche" },
+      { ingredient: "Citronnelle", action: "émincer très finement la partie blanche" },
       { ingredient: "Poulet — blancs / filets", action: "couper en gros cubes" },
       { ingredient: "Coriandre fraîche", action: "ciseler" },
       { ingredient: "Riz basmati", action: "rincer" },
@@ -523,7 +523,7 @@ const INITIAL_RECIPES = [
     ],
     prep: [
       { ingredient: "Oignons", action: "mixer avec ail, gingembre et curcuma en pâte lisse" },
-      { ingredient: "Ail", action: "inclus dans le mixé" },
+      { ingredient: "Ail", action: "écraser" },
       { ingredient: "Petites pommes de terre entières", action: "laver et garder entières" },
       { ingredient: "Citron confit", action: "couper en quartiers" },
       { ingredient: "Coriandre fraîche", action: "ciseler" },
@@ -672,7 +672,7 @@ const INITIAL_RECIPES = [
     prep: [
       { ingredient: "Carottes", action: "couper en tout petits dés" },
       { ingredient: "Oignons", action: "émincer finement" },
-      { ingredient: "Ail", action: "hacher" },
+      { ingredient: "Ail", action: "écraser" },
       { ingredient: "Jambon blanc en dés", action: "couper en dés" },
     ],
     assembly: [
@@ -932,37 +932,57 @@ function findIngredientQty(recipe, prepIngredientName, srv) {
 }
 
 function buildMutualizedPrep(selected, recipeServings) {
-  // Group all prep actions across recipes by ingredient + action type,
-  // so the cook does "peel all carrots, slice 2, grate 2, chop 2 roughly" once
-  // instead of repeating the same ingredient per recipe.
+  // For each ingredient+action combo, sum ALL quantities across recipes into one total.
+  // Show ONE line per ingredient+action with the total quantity.
+  // The recipe names go into the assembly step, not here.
   const byIngredient = {};
+
   selected.forEach(recipe => {
     if (!recipe.prep) return;
     const srv = recipeServings[recipe.id] || recipe.servings;
     recipe.prep.forEach(p => {
-      const key = stripAccents(p.ingredient.toLowerCase());
-      if (!byIngredient[key]) byIngredient[key] = { ingredient: p.ingredient, actions: [] };
-      const qty = findIngredientQty(recipe, p.ingredient, srv);
-      byIngredient[key].actions.push({ action: p.action, recipeName: recipe.name, qty });
+      const ingKey = stripAccents(p.ingredient.toLowerCase());
+      if (!byIngredient[ingKey]) byIngredient[ingKey] = { ingredient: p.ingredient, actions: {} };
+
+      const actionKey = stripAccents(p.action.toLowerCase());
+      if (!byIngredient[ingKey].actions[actionKey]) {
+        byIngredient[ingKey].actions[actionKey] = { action: p.action, totalQty: null, unit: "", recipeNames: [] };
+      }
+
+      // Find the ingredient in the recipe to get its quantity
+      const ingNorm = stripAccents(p.ingredient.toLowerCase());
+      const match = recipe.ingredients.find(ing =>
+        stripAccents(normalizeIngredientName(ing.name).toLowerCase()) === ingNorm
+      );
+
+      if (match) {
+        const scaledNum = parseFloat(scaleQty(match.qty, recipe.servings, srv));
+        const entry = byIngredient[ingKey].actions[actionKey];
+        if (entry.totalQty === null) {
+          entry.totalQty = scaledNum;
+          entry.unit = match.unit || "";
+        } else if (entry.unit === (match.unit || "")) {
+          entry.totalQty += scaledNum;
+        }
+        // else different units — keep first
+      }
+
+      byIngredient[ingKey].actions[actionKey].recipeNames.push(recipe.name);
     });
   });
 
   return Object.values(byIngredient).map(entry => {
-    // Group identical actions together, list distinct actions separately
-    const actionGroups = {};
-    entry.actions.forEach(a => {
-      if (!actionGroups[a.action]) actionGroups[a.action] = [];
-      actionGroups[a.action].push({ recipeName: a.recipeName, qty: a.qty });
-    });
-    const actionLines = Object.entries(actionGroups).map(([action, items]) => {
-      // De-duplicate by recipe name while keeping qty
-      const seen = new Set();
-      const uniqueItems = items.filter(it => {
-        if (seen.has(it.recipeName)) return false;
-        seen.add(it.recipeName);
-        return true;
-      });
-      return { action, items: uniqueItems };
+    const actionLines = Object.values(entry.actions).map(a => {
+      let qtyDisplay = "—";
+      if (a.totalQty !== null) {
+        const rounded = a.totalQty === Math.floor(a.totalQty) ? a.totalQty : parseFloat(a.totalQty.toFixed(1));
+        qtyDisplay = a.unit ? `${rounded} ${a.unit}` : `${rounded}`;
+      }
+      return {
+        action: a.action,
+        qty: qtyDisplay,
+        recipeNames: [...new Set(a.recipeNames)],
+      };
     });
     return { ingredient: entry.ingredient, actionLines };
   });
@@ -984,14 +1004,7 @@ function generateBatchPlan(selected, recipeServings) {
   const mutualizedPrep = buildMutualizedPrep(selected, recipeServings);
   const totalPrep = Math.max(...selected.map((r) => r.prepTime));
   if (mutualizedPrep.length > 0) {
-    const prepItems = mutualizedPrep.map(entry => ({
-      ingredient: entry.ingredient,
-      actions: entry.actionLines.map(al => ({
-        action: al.action,
-        items: al.items,
-      })),
-    }));
-    steps.push({ time: 0, label: "Préparer les ingrédients", prepItems, type: "prep" });
+    steps.push({ time: 0, label: "Préparer les ingrédients", prepItems: mutualizedPrep, type: "prep" });
   } else {
     steps.push({ time: 0, label: "Préparer tous les ingrédients", detail: selected.map((r) => r.name).join("\n"), type: "prep" });
   }
@@ -1038,6 +1051,7 @@ const INGREDIENT_ALIASES = [
   { match: ["oignon", "oignons"], canonical: "Oignons" },
   { match: ["gousse d'ail", "gousses d'ail", "ail"], canonical: "Ail" },
   { match: ["jus de citron", "citron"], canonical: "Citron" },
+  { match: ["citronnelle", "tiges de citronnelle", "tige de citronnelle", "tiges de citronnelle émincées finement"], canonical: "Citronnelle" },
   { match: ["échalote", "échalotes"], canonical: "Échalote" },
   { match: ["persil"], canonical: "Persil" },
   { match: ["thym"], canonical: "Thym" },
@@ -1272,7 +1286,9 @@ export default function BatchCooking() {
   const [detailServings, setDetailServings] = useState(2);
   const [recipeServings, setRecipeServings] = useState({});
   const [showSauceBlanche, setShowSauceBlanche] = useState(false);
-  const [restesSuggestion, setRestesSuggestion] = useState(null); // { tag, suggestions[] }
+  const [restesSuggestion, setRestesSuggestion] = useState(null);
+  const [weekPlan, setWeekPlan] = useState({ Lun: null, Mar: null, Mer: null, Jeu: null, Ven: null });
+  const [draggedRecipe, setDraggedRecipe] = useState(null); // { tag, suggestions[] }
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [weekHistory, setWeekHistory] = useState([]);
@@ -1363,19 +1379,23 @@ export default function BatchCooking() {
         if (dbLists && dbLists.length > 0) {
           setSavedShoppingLists(dbLists.map(l => ({ label: l.label, date: l.date, recipes: l.recipes, list: l.list, dbId: l.id })));
         }
-        // Load current week state
-        const cw = await db.loadCurrentWeek();
-        if (cw && cw.week_status && cw.week_status !== "idle") {
-          setWeekStatus(cw.week_status);
-          if (cw.recipe_servings) setRecipeServings(cw.recipe_servings);
-          if (cw.owned_ingredients) setOwnedIngredients(cw.owned_ingredients);
-          if (cw.manual_items) setManualItems(cw.manual_items);
-          if (cw.active_shopping_list) setActiveShoppingList(cw.active_shopping_list);
-          // Restore selected recipes — stored as full objects
-          if (cw.selected_recipes && cw.selected_recipes.length > 0) {
-            setSelected(cw.selected_recipes);
+        // Restore current week from localStorage
+        try {
+          const raw = localStorage.getItem("carnet_current_week");
+          if (raw) {
+            const cw = JSON.parse(raw);
+            if (cw.weekStatus && cw.weekStatus !== "idle") {
+              setWeekStatus(cw.weekStatus);
+              if (cw.recipeServings) setRecipeServings(cw.recipeServings);
+              if (cw.ownedIngredients) setOwnedIngredients(cw.ownedIngredients);
+              if (cw.manualItems) setManualItems(cw.manualItems);
+              if (cw.activeShoppingList) setActiveShoppingList(cw.activeShoppingList);
+              if (cw.selectedIds && cw.selectedIds.length > 0) {
+                window.__pendingSelectedIds = cw.selectedIds;
+              }
+            }
           }
-        }
+        } catch(e) {}
       } catch (e) {
         console.error("Supabase load error:", e);
       }
@@ -1385,24 +1405,16 @@ export default function BatchCooking() {
   }, []);
 
   // Auto-save current week state whenever key state changes
+  // Save current week to localStorage whenever key state changes
   const [appReady, setAppReady] = useState(false);
   useEffect(() => {
-    if (!appReady) return; // don't save until app has finished loading
-    if (weekStatus === "idle") {
-      db.saveCurrentWeek({ week_status: "idle", selected_recipes: [], recipe_servings: {}, active_shopping_list: null, owned_ingredients: {}, manual_items: [] }).catch(() => {});
-      return;
-    }
-    const saveTimer = setTimeout(() => {
-      db.saveCurrentWeek({
-        week_status: weekStatus,
-        selected_recipes: selected,
-        recipe_servings: recipeServings,
-        active_shopping_list: activeShoppingList || null,
-        owned_ingredients: ownedIngredients,
-        manual_items: manualItems,
-      }).catch(() => {});
-    }, 800);
-    return () => clearTimeout(saveTimer);
+    if (!appReady) return;
+    const data = {
+      weekStatus, recipeServings, ownedIngredients, manualItems,
+      selectedIds: selected.map(r => r.id),
+      activeShoppingList: activeShoppingList || null,
+    };
+    try { localStorage.setItem("carnet_current_week", JSON.stringify(data)); } catch(e) {}
   }, [weekStatus, selected, recipeServings, activeShoppingList, ownedIngredients, manualItems, appReady]);
 
   const toggleSelect = (recipe) => {
@@ -2020,29 +2032,30 @@ export default function BatchCooking() {
         )}
 
         {/* Header */}
-        <div style={{ padding: "40px 24px 28px", maxWidth: 700, margin: "0 auto" }}>
-          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: COLORS.terracotta, marginBottom: 8 }}>Batch cooking</div>
-          <h1 style={{ margin: "0 0 8px", fontSize: 34, fontWeight: 500, fontFamily: "Georgia, serif", color: COLORS.ink, lineHeight: 1.15 }}>Le carnet de la maison</h1>
-          <p style={{ margin: 0, fontSize: 15, color: COLORS.inkMuted, fontFamily: "Georgia, serif", fontStyle: "italic" }}>Recettes, courses et plans de cuisson pour toute la semaine</p>
+        <div style={{ padding: "28px 24px 0", maxWidth: 700, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, fontFamily: "Georgia, serif", color: COLORS.ink, lineHeight: 1.2 }}>Le carnet de la maison</h1>
+            <p style={{ margin: "3px 0 0", fontSize: 13, color: COLORS.inkMuted, fontFamily: "Georgia, serif", fontStyle: "italic" }}>Recettes · Courses · Cuisine</p>
+          </div>
+          <div style={{ fontSize: 28 }}>🥘</div>
         </div>
 
-        {/* Tabs */}
-        <div style={{ borderBottom: `1px solid ${COLORS.line}`, position: "sticky", top: 0, background: COLORS.cream, zIndex: 10 }}>
-          <div style={{ display: "flex", gap: 4, maxWidth: 700, margin: "0 auto", padding: "0 24px" }}>
+        {/* Tabs — icon cards */}
+        <div style={{ background: COLORS.cream, position: "sticky", top: 0, zIndex: 10, padding: "12px 16px 0", borderBottom: `1px solid ${COLORS.line}` }}>
+          <div style={{ display: "flex", gap: 8, maxWidth: 700, margin: "0 auto", justifyContent: "space-between" }}>
             {[
-              { key: "home",     label: "Accueil" },
-              { key: "select",   label: "Recettes" },
-              { key: "shopping", label: "Courses",   active: view === "shopping" || view === "batch" },
-              { key: "plan",     label: "Cuisine",   active: view === "plan",  disabled: weekStatus !== "cooking" },
-              { key: "history",  label: "Historique" },
+              { key: "home",     label: "Accueil",  icon: "🏠" },
+              { key: "select",   label: "Recettes", icon: "📖" },
+              { key: "shopping", label: "Courses",  icon: "🛒", active: view === "shopping" || view === "batch" },
+              { key: "plan",     label: "Cuisine",  icon: "👨‍🍳", active: view === "plan" },
+              { key: "planning", label: "Semaine",  icon: "📅" },
+              { key: "history",  label: "Archives", icon: "🕐" },
             ].map((tab) => {
               const isActive = tab.active !== undefined ? tab.active : view === tab.key;
               const isDisabled = tab.disabled;
               const handleClick = () => {
                 if (isDisabled) return;
-                if (tab.key === "plan") {
-                  setBatchPlan(generateBatchPlan(selected, recipeServings));
-                }
+                if (tab.key === "plan") { setBatchPlan(generateBatchPlan(selected, recipeServings)); setView("plan"); return; }
                 if (tab.key === "shopping" && view !== "shopping" && view !== "batch") {
                   setView(weekStatus === "planning" ? "batch" : "shopping");
                 } else {
@@ -2051,12 +2064,21 @@ export default function BatchCooking() {
               };
               return (
                 <button key={tab.key} onClick={handleClick} style={{
-                  padding: "14px 4px", marginRight: 20, border: "none", background: "transparent",
+                  flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+                  padding: "8px 4px 10px", border: "none", borderRadius: "12px 12px 0 0",
+                  background: isActive ? COLORS.card : "transparent",
+                  boxShadow: isActive ? `0 -2px 8px rgba(0,0,0,0.06)` : "none",
+                  cursor: isDisabled ? "not-allowed" : "pointer",
                   borderBottom: isActive ? `2px solid ${COLORS.terracotta}` : "2px solid transparent",
-                  color: isDisabled ? COLORS.line : isActive ? COLORS.ink : COLORS.inkMuted,
-                  fontWeight: 500, fontSize: 14, cursor: isDisabled ? "not-allowed" : "pointer",
-                  fontFamily: "'Helvetica Neue', sans-serif", marginBottom: -1,
-                }}>{tab.label}</button>
+                  transition: "all 0.15s",
+                }}>
+                  <span style={{ fontSize: 20, filter: isDisabled ? "grayscale(1) opacity(0.3)" : isActive ? "none" : "opacity(0.5)" }}>{tab.icon}</span>
+                  <span style={{
+                    fontSize: 10, fontWeight: isActive ? 600 : 400, letterSpacing: "0.02em",
+                    color: isDisabled ? COLORS.line : isActive ? COLORS.terracotta : COLORS.inkMuted,
+                    fontFamily: "'Helvetica Neue', sans-serif",
+                  }}>{tab.label}</span>
+                </button>
               );
             })}
           </div>
@@ -2479,37 +2501,35 @@ export default function BatchCooking() {
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                           <thead>
                             <tr>
-                              <th style={{ textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.04em", textTransform: "uppercase", color: COLORS.inkMuted, paddingBottom: 8, borderBottom: `1px solid ${COLORS.line}` }}>Ingrédient</th>
+                              <th style={{ textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.04em", textTransform: "uppercase", color: COLORS.inkMuted, paddingBottom: 8, paddingRight: 12, borderBottom: `1px solid ${COLORS.line}`, width: "30%" }}>Ingrédient</th>
+                              <th style={{ textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.04em", textTransform: "uppercase", color: COLORS.inkMuted, paddingBottom: 8, paddingRight: 12, borderBottom: `1px solid ${COLORS.line}`, whiteSpace: "nowrap" }}>Quantité</th>
                               <th style={{ textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.04em", textTransform: "uppercase", color: COLORS.inkMuted, paddingBottom: 8, borderBottom: `1px solid ${COLORS.line}` }}>Action</th>
-                              <th style={{ textAlign: "right", fontWeight: 600, fontSize: 11, letterSpacing: "0.04em", textTransform: "uppercase", color: COLORS.inkMuted, paddingBottom: 8, borderBottom: `1px solid ${COLORS.line}` }}>Quantité</th>
-                              <th style={{ textAlign: "left", fontWeight: 600, fontSize: 11, letterSpacing: "0.04em", textTransform: "uppercase", color: COLORS.inkMuted, paddingBottom: 8, borderBottom: `1px solid ${COLORS.line}` }}>Pour</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {step.prepItems.map((item) =>
-                              item.actions.map((a, k) =>
-                                a.items.map((it, m) => (
-                                  <tr key={`${item.ingredient}-${k}-${m}`}>
-                                    {k === 0 && m === 0 && (
-                                      <td rowSpan={item.actions.reduce((sum, ax) => sum + ax.items.length, 0)} style={{
-                                        verticalAlign: "top", paddingTop: 10, paddingRight: 10, paddingBottom: 10,
-                                        borderBottom: `1px solid ${COLORS.line}`, fontWeight: 600, fontFamily: "Georgia, serif", color: COLORS.terracotta,
-                                      }}>{item.ingredient}</td>
+                            {step.prepItems.map((item, ii) =>
+                              item.actionLines.map((a, k) => (
+                                <tr key={`${item.ingredient}-${k}`}>
+                                  {k === 0 && (
+                                    <td rowSpan={item.actionLines.length} style={{
+                                      verticalAlign: "top", paddingTop: 10, paddingRight: 10, paddingBottom: 10,
+                                      borderBottom: `1px solid ${COLORS.line}`, fontWeight: 600,
+                                      fontFamily: "Georgia, serif", color: COLORS.terracotta,
+                                    }}>{item.ingredient}</td>
+                                  )}
+                                  <td style={{ verticalAlign: "top", padding: "10px 10px 10px 0", borderBottom: `1px solid ${COLORS.line}`, fontWeight: 600, color: COLORS.ink, whiteSpace: "nowrap" }}>
+                                    {a.qty}
+                                  </td>
+                                  <td style={{ verticalAlign: "top", padding: "10px 0", borderBottom: `1px solid ${COLORS.line}`, color: COLORS.ink }}>
+                                    <div>{a.action}</div>
+                                    {a.recipeNames.length > 1 && (
+                                      <div style={{ fontSize: 11, color: COLORS.inkMuted, fontStyle: "italic", marginTop: 2 }}>
+                                        {a.recipeNames.join(", ")}
+                                      </div>
                                     )}
-                                    {m === 0 && (
-                                      <td rowSpan={a.items.length} style={{
-                                        verticalAlign: "top", padding: "10px", borderBottom: `1px solid ${COLORS.line}`, color: COLORS.ink,
-                                      }}>{a.action}</td>
-                                    )}
-                                    <td style={{ verticalAlign: "top", padding: "10px", borderBottom: `1px solid ${COLORS.line}`, textAlign: "right", fontWeight: 600, color: COLORS.ink, whiteSpace: "nowrap" }}>
-                                      {it.qty || "—"}
-                                    </td>
-                                    <td style={{ verticalAlign: "top", padding: "10px", borderBottom: `1px solid ${COLORS.line}`, color: COLORS.inkMuted, fontStyle: "italic", fontSize: 12 }}>
-                                      {it.recipeName}
-                                    </td>
-                                  </tr>
-                                ))
-                              )
+                                  </td>
+                                </tr>
+                              ))
                             )}
                           </tbody>
                         </table>
@@ -2576,6 +2596,111 @@ export default function BatchCooking() {
             </>
           )}
 
+
+
+          {/* PLANNING VIEW */}
+          {view === "planning" && (
+            <div>
+              <div style={{ marginBottom: 20 }}>
+                <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 500, fontFamily: "Georgia, serif" }}>Ma semaine</h2>
+                <p style={{ fontSize: 13, color: COLORS.inkMuted, margin: 0 }}>Glisse chaque plat sur le jour de ton choix</p>
+              </div>
+
+              {/* Days grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 20 }}>
+                {["Lun", "Mar", "Mer", "Jeu", "Ven"].map(day => (
+                  <div key={day}>
+                    <div style={{ fontSize: 11, color: COLORS.inkMuted, textAlign: "center", marginBottom: 6, fontWeight: 500 }}>{day}</div>
+                    <div
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={e => {
+                        e.preventDefault();
+                        if (draggedRecipe) {
+                          setWeekPlan(prev => ({ ...prev, [day]: draggedRecipe }));
+                          setDraggedRecipe(null);
+                        }
+                      }}
+                      onClick={() => {
+                        if (weekPlan[day]) setWeekPlan(prev => ({ ...prev, [day]: null }));
+                      }}
+                      style={{
+                        minHeight: 90, borderRadius: 12, border: `1.5px dashed ${weekPlan[day] ? "transparent" : COLORS.line}`,
+                        background: weekPlan[day] ? COLORS.card : "transparent",
+                        boxShadow: weekPlan[day] ? `0 2px 8px rgba(0,0,0,0.06)` : "none",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        cursor: weekPlan[day] ? "pointer" : "default",
+                        transition: "all 0.15s", padding: 8,
+                      }}>
+                      {weekPlan[day] ? (
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ fontSize: 24, marginBottom: 4 }}>
+                            {weekPlan[day].category === "Poulet" ? "🍗" :
+                             weekPlan[day].category === "Boeuf" ? "🥩" :
+                             weekPlan[day].category === "Porc" ? "🐷" :
+                             weekPlan[day].category === "Rapide" ? "⚡" : "🍽️"}
+                          </div>
+                          <div style={{ fontSize: 10, fontWeight: 500, color: COLORS.ink, lineHeight: 1.3 }}>
+                            {weekPlan[day].name.length > 14 ? weekPlan[day].name.slice(0, 12) + "…" : weekPlan[day].name}
+                          </div>
+                          <div style={{ fontSize: 9, color: COLORS.inkMuted, marginTop: 2 }}>× appui pour retirer</div>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: 18, color: COLORS.line }}>+</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Unplanned days warning */}
+              {Object.values(weekPlan).some(v => !v) && (
+                <div style={{ background: COLORS.goldSoft, borderRadius: 12, padding: "10px 14px", marginBottom: 16 }}>
+                  <p style={{ fontSize: 12, color: "#7a5a1f", margin: 0 }}>
+                    {Object.entries(weekPlan).filter(([, v]) => !v).map(([k]) => k).join(", ")} — pas encore planifié
+                  </p>
+                </div>
+              )}
+
+              {/* Draggable recipes */}
+              <div style={{ borderTop: `0.5px solid ${COLORS.line}`, paddingTop: 16 }}>
+                <p style={{ fontSize: 12, color: COLORS.inkMuted, margin: "0 0 10px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.04em", fontSize: 11 }}>Plats du batch — à placer</p>
+                {selected.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "20px 0", color: COLORS.inkMuted, fontSize: 13 }}>
+                    Sélectionne des recettes dans l'onglet Recettes d'abord
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {selected.map(recipe => (
+                      <div
+                        key={recipe.id}
+                        draggable
+                        onDragStart={() => setDraggedRecipe(recipe)}
+                        onDragEnd={() => setDraggedRecipe(null)}
+                        style={{
+                          background: COLORS.card, border: `0.5px solid ${COLORS.line}`,
+                          borderRadius: 12, padding: "12px 16px",
+                          display: "flex", alignItems: "center", gap: 12,
+                          cursor: "grab", userSelect: "none",
+                          opacity: Object.values(weekPlan).some(p => p && p.id === recipe.id) ? 0.4 : 1,
+                        }}>
+                        <span style={{ fontSize: 24 }}>
+                          {recipe.category === "Poulet" ? "🍗" :
+                           recipe.category === "Boeuf" ? "🥩" :
+                           recipe.category === "Porc" ? "🐷" :
+                           recipe.category === "Rapide" ? "⚡" : "🍽️"}
+                        </span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "Georgia, serif" }}>{recipe.name}</div>
+                          <div style={{ fontSize: 11, color: COLORS.inkMuted }}>Glisse sur un jour</div>
+                        </div>
+                        <span style={{ fontSize: 18, color: COLORS.line }}>⠿</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* HISTORY VIEW */}
           {view === "history" && (
