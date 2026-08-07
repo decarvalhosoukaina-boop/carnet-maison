@@ -39,6 +39,20 @@ const db = {
       headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
     });
   },
+  async saveCurrentWeek(data) {
+    await fetch(`${SUPABASE_URL}/rest/v1/current_week?id=eq.current`, {
+      method: "PATCH",
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ ...data, updated_at: new Date().toISOString() }),
+    });
+  },
+  async loadCurrentWeek() {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/current_week?id=eq.current`, {
+      headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` },
+    });
+    const data = await res.json();
+    return data && data[0] ? data[0] : null;
+  },
 };
 
 const COLORS = {
@@ -782,7 +796,7 @@ const INITIAL_RECIPES = [
   },
   ,
   {
-    id: 18, name: "Nems façon Carole", subtitle: "Feuilles de riz, viande hachée, légumes", category: "Boeuf",
+    id: 18, name: "Nems façon Carole", subtitle: "Galettes de riz, viande hachée, légumes", category: "Boeuf",
     servings: 4, prepTime: 30, cookTime: 20, temp: null,
     ingredients: [
       { name: "Viande hachée", qty: 300, unit: "g" },
@@ -796,7 +810,7 @@ const INITIAL_RECIPES = [
       { name: "Œuf", qty: 1, unit: "" },
       { name: "Sauce soja", qty: 2, unit: "cas" },
       { name: "Nuoc-mâm", qty: 2, unit: "cas" },
-      { name: "Feuilles de riz", qty: 20, unit: "" },
+      { name: "Galettes de riz (feuilles)", qty: 20, unit: "" },
       { name: "Huile pour friture", qty: 1, unit: "L" },
     ],
     prep: [
@@ -1349,12 +1363,55 @@ export default function BatchCooking() {
         if (dbLists && dbLists.length > 0) {
           setSavedShoppingLists(dbLists.map(l => ({ label: l.label, date: l.date, recipes: l.recipes, list: l.list, dbId: l.id })));
         }
+        // Load current week state
+        const cw = await db.loadCurrentWeek();
+        if (cw && cw.week_status && cw.week_status !== "idle") {
+          setWeekStatus(cw.week_status);
+          if (cw.recipe_servings) setRecipeServings(cw.recipe_servings);
+          if (cw.owned_ingredients) setOwnedIngredients(cw.owned_ingredients);
+          if (cw.manual_items) setManualItems(cw.manual_items);
+          if (cw.active_shopping_list) setActiveShoppingList(cw.active_shopping_list);
+          // Restore selected recipes from ids
+          if (cw.selected_recipes && cw.selected_recipes.length > 0) {
+            // We need to wait for recipes to be loaded first — store ids temporarily
+            window.__pendingSelectedIds = cw.selected_recipes;
+          }
+        }
       } catch (e) {
         console.error("Supabase load error:", e);
       }
     };
     load();
   }, []);
+
+  // Restore selected recipes once recipes are loaded
+  useEffect(() => {
+    if (recipes.length > 0 && window.__pendingSelectedIds) {
+      const ids = window.__pendingSelectedIds;
+      const restored = ids.map(id => recipes.find(r => r.id === id)).filter(Boolean);
+      if (restored.length > 0) setSelected(restored);
+      window.__pendingSelectedIds = null;
+    }
+  }, [recipes]);
+
+  // Auto-save current week state whenever key state changes
+  useEffect(() => {
+    if (weekStatus === "idle") {
+      db.saveCurrentWeek({ week_status: "idle", selected_recipes: [], recipe_servings: {}, active_shopping_list: null, owned_ingredients: {}, manual_items: [] }).catch(() => {});
+      return;
+    }
+    const saveTimer = setTimeout(() => {
+      db.saveCurrentWeek({
+        week_status: weekStatus,
+        selected_recipes: selected.map(r => r.id),
+        recipe_servings: recipeServings,
+        active_shopping_list: activeShoppingList || null,
+        owned_ingredients: ownedIngredients,
+        manual_items: manualItems,
+      }).catch(() => {});
+    }, 800);
+    return () => clearTimeout(saveTimer);
+  }, [weekStatus, selected, recipeServings, activeShoppingList, ownedIngredients, manualItems]);
 
   const toggleSelect = (recipe) => {
     const isCurrentlySelected = selected.find((r) => r.id === recipe.id);
@@ -1368,7 +1425,7 @@ export default function BatchCooking() {
       if (weekStatus === "idle") setWeekStatus("planning");
       // Detect if this recipe generates leftovers matching a Restes recipe
       const RESTE_TRIGGERS = {
-        "riz": ["riz", "basmati", "riz long grain"],
+        "riz": ["riz basmati", "riz long grain", "riz cuit", "riz blanc", "riz jasmin"],
         "poulet": ["poulet rôti", "poulet effiloché"],
         "viande grillée": ["poitrine de porc", "côte", "grillade", "bbq"],
       };
