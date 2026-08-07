@@ -1425,35 +1425,6 @@ export default function BatchCooking() {
     return () => clearTimeout(timer);
   }, [weekStatus, selected, recipeServings, activeShoppingList, ownedIngredients, manualItems, weekPlan, appReady]);
 
-  // Mouse drag handlers for planning view
-  React.useEffect(() => {
-    if (!planDragging) return;
-    const onMove = e => {
-      setPlanDragPos({ x: e.clientX, y: e.clientY });
-      const day = ["Lun","Mar","Mer","Jeu","Ven"].find(d => {
-        const el = planDayRefs.current[d];
-        if (!el) return false;
-        const r = el.getBoundingClientRect();
-        return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
-      }) || null;
-      setPlanOverDay(day);
-    };
-    const onUp = e => {
-      const day = ["Lun","Mar","Mer","Jeu","Ven"].find(d => {
-        const el = planDayRefs.current[d];
-        if (!el) return false;
-        const r = el.getBoundingClientRect();
-        return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
-      }) || null;
-      if (day) setWeekPlan(prev => ({ ...prev, [day]: planDragging }));
-      setPlanDragging(null);
-      setPlanOverDay(null);
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
-  }, [planDragging]);
-
   const toggleSelect = (recipe) => {
     const isCurrentlySelected = selected.find((r) => r.id === recipe.id);
     if (isCurrentlySelected) {
@@ -2733,8 +2704,7 @@ export default function BatchCooking() {
                   </div>
                 ) : selected.map(r => (
                   <div key={r.id}
-                    onMouseDown={e => { setPlanDragging(r); setPlanDragPos({ x: e.clientX, y: e.clientY }); e.preventDefault(); }}
-                    onTouchStart={e => { const t = e.touches[0]; setPlanDragging(r); setPlanDragPos({ x: t.clientX, y: t.clientY }); }}
+                    onTouchStart={e => { const t = e.touches[0]; setPlanDragging(r); setPlanDragPos({ x: t.clientX, y: t.clientY }); e.preventDefault(); }}
                     style={{
                       background: planDragging && planDragging.id === r.id ? COLORS.terracottaSoft : COLORS.card,
                       border: "0.5px solid " + (planDragging && planDragging.id === r.id ? COLORS.terracotta : COLORS.line),
