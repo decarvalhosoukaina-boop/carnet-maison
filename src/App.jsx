@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 const SUPABASE_URL = "https://violasrrsvyqjfnqxvgh.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpb2xhc3Jyc3Z5cWpmbnF4dmdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2NjYzMzUsImV4cCI6MjA5OTI0MjMzNX0.sJJeFVPBKhGRessF1m-I_HN2SvwjD0BWcQ6srfixbRQ";
@@ -299,7 +299,6 @@ const INITIAL_RECIPES = [
     ],
     cookMethod: "four",
   },
-  ,
   {
     id: 6, name: "Lasagnes Bolognaise", subtitle: "Crème fraîche, légumes cachés", category: "Boeuf",
     servings: 5, prepTime: 25, cookTime: 45, temp: 190,
@@ -353,7 +352,6 @@ const INITIAL_RECIPES = [
     ],
     cookMethod: "four",
   },
-  ,
   {
     id: 7, name: "Poulet moutarde, patates au four", subtitle: "Cuisses dorées, pommes de terre entières", category: "Poulet",
     servings: 3, prepTime: 10, cookTime: 55, temp: 180,
@@ -391,7 +389,6 @@ const INITIAL_RECIPES = [
     ],
     cookMethod: "four",
   },
-  ,
   {
     id: 8, name: "Hachis Parmentier — croûte crumble", subtitle: "Bœuf mijoté, crumble de patates au persil", category: "Boeuf",
     servings: 5, prepTime: 20, cookTime: 40, temp: 200,
@@ -439,57 +436,6 @@ const INITIAL_RECIPES = [
       "Batch cooking — se congèle très bien avant ou après cuisson. Réchauffer à 160°C pendant 20 min.",
     ],
     cookMethod: "four",
-  },
-  ,
-  {
-    id: 9, name: "Poulet Tikka Masala", subtitle: "Mariné, sauce crémeuse aux épices", category: "Poulet",
-    servings: 4, prepTime: 20, cookTime: 35, temp: null,
-    marinadeNote: "Idéalement mariné la veille — minimum 30 min si fait le jour même",
-    ingredients: [
-      { name: "Blancs de poulet coupés en cubes", qty: 600, unit: "g" },
-      { name: "Yaourt grec (marinade)", qty: 150, unit: "g" },
-      { name: "Gousses d'ail écrasées", qty: 5, unit: "" },
-      { name: "Gingembre frais râpé", qty: 1, unit: "cac" },
-      { name: "Garam masala", qty: 2, unit: "cac" },
-      { name: "Cumin", qty: 2, unit: "cac" },
-      { name: "Paprika fumé", qty: 2, unit: "cac" },
-      { name: "Curcuma", qty: 1, unit: "cac" },
-      { name: "Gingembre en poudre", qty: 0.5, unit: "cac" },
-      { name: "Jus de citron", qty: 0.5, unit: "citron" },
-      { name: "Oignon émincé", qty: 1, unit: "" },
-      { name: "Tomates concassées en boîte", qty: 400, unit: "g" },
-      { name: "Concentré de tomates", qty: 1, unit: "cas" },
-      { name: "Crème fraîche épaisse", qty: 200, unit: "ml" },
-      { name: "Riz basmati", qty: 300, unit: "g" },
-      { name: "Coriandre fraîche", qty: 1, unit: "poignée" },
-    ],
-    prep: [
-      { ingredient: "Poulet — blancs / filets", action: "couper en cubes et mariner (yaourt, ail, épices, citron)" },
-      { ingredient: "Oignons", action: "émincer" },
-      { ingredient: "Ail", action: "écraser" },
-      { ingredient: "Coriandre fraîche", action: "ciseler" },
-      { ingredient: "Riz basmati", action: "rincer" },
-    ],
-    assembly: [
-      "Mélanger le poulet avec yaourt, ail, gingembre en poudre, garam masala, cumin, paprika, curcuma et citron — mariner minimum 30 min",
-      "Faire dorer le poulet mariné à la poêle à feu vif 5-6 min, réserver (pas besoin de cuire à cœur)",
-      "Dans la même poêle, faire revenir l'oignon émincé 5 min, ajouter ail et gingembre frais",
-      "Ajouter les épices restantes, torréfier 1 min",
-      "Incorporer tomates concassées et concentré, mijoter 15 min",
-      "Ajouter la crème fraîche, remettre le poulet, mijoter 10 min à feu doux",
-      "En parallèle — cuire le riz basmati 12 min à feu doux",
-      "Servir sur riz, parsemer de coriandre fraîche",
-    ],
-    steps: [
-      "Mélanger le poulet avec yaourt, ail, gingembre en poudre, garam masala, cumin, paprika, curcuma et citron — mariner minimum 30 min",
-      "Faire dorer le poulet mariné à la poêle à feu vif 5-6 min, réserver",
-      "Dans la même poêle, faire revenir l'oignon 5 min, ajouter ail et gingembre frais",
-      "Ajouter les épices, torréfier 1 min",
-      "Incorporer tomates concassées et concentré, mijoter 15 min",
-      "Ajouter la crème fraîche, remettre le poulet, mijoter 10 min à feu doux",
-      "Servir sur riz basmati, parsemer de coriandre fraîche",
-    ],
-    cookMethod: "feux",
   },
   ,
   {
@@ -546,7 +492,6 @@ const INITIAL_RECIPES = [
     ],
     cookMethod: "feux",
   },
-  ,
   {
     id: 11, name: "Tagine de poulet au citron confit", subtitle: "Mixé d'aromates, olives, petites patates", category: "Poulet",
     servings: 4, prepTime: 15, cookTime: 45, temp: null,
@@ -592,6 +537,364 @@ const INITIAL_RECIPES = [
       "Le mixé d'aromates — plus tu le fais revenir longtemps (5-6 min), plus les saveurs se développent.",
       "Batch cooking — encore meilleur le lendemain. Se congèle très bien.",
       "Variante — ajouter une poignée de raisins secs pour une touche sucrée-salée typiquement marocaine.",
+    ],
+    cookMethod: "feux",
+  },
+  {
+    id: 13, name: "Poitrine de porc BBQ moutarde-soja-miel", subtitle: "Marinade sucrée-salée, grillée au BBQ", category: "Porc",
+    servings: 4, prepTime: 10, cookTime: 10, temp: null,
+    marinadeNote: "Idéalement marinée toute la nuit — minimum 2h si fait le jour même",
+    ingredients: [
+      { name: "Poitrine de porc en tranches", qty: 800, unit: "g" },
+      { name: "Sauce soja", qty: 4, unit: "cas" },
+      { name: "Miel liquide", qty: 3, unit: "cas" },
+      { name: "Moutarde de Dijon", qty: 2, unit: "cas" },
+      { name: "Gousses d'ail écrasées", qty: 2, unit: "" },
+      { name: "Huile d'olive", qty: 2, unit: "cas" },
+      { name: "Vinaigre de cidre", qty: 1, unit: "cas" },
+      { name: "Gingembre frais râpé", qty: 1, unit: "cac" },
+      { name: "Poivre noir moulu", qty: 1, unit: "pincée" },
+    ],
+    prep: [
+      { ingredient: "Ail", action: "écraser" },
+      { ingredient: "Gingembre frais râpé", action: "râper" },
+      { ingredient: "Poitrine de porc en tranches", action: "enrober avec la marinade et masser sur toutes les faces" },
+    ],
+    assembly: [
+      "Mélanger sauce soja, miel, moutarde, ail, huile d'olive, vinaigre de cidre, gingembre et poivre jusqu'à sauce homogène",
+      "Enrober les tranches de porc avec la marinade dans un plat ou sac zippé — bien masser",
+      "Laisser mariner au frigo toute la nuit (minimum 2h)",
+      "Sortir la viande 15-20 min avant cuisson pour tempérer",
+      "Préchauffer le BBQ à feu moyen-vif",
+      "Griller 3-4 min par face — surveiller car le miel caramélise vite, badigeonner avec le reste de marinade en cours de cuisson",
+      "Laisser reposer 2-3 min avant de servir",
+    ],
+    steps: [
+      "Mélanger sauce soja, miel, moutarde, ail, huile, vinaigre de cidre, gingembre et poivre jusqu'à sauce homogène",
+      "Enrober les tranches de porc avec la marinade — bien masser sur toutes les faces",
+      "Laisser mariner au frigo toute la nuit (minimum 2h)",
+      "Sortir la viande 15-20 min avant cuisson pour tempérer",
+      "Préchauffer le BBQ à feu moyen-vif",
+      "Griller 3-4 min par face en surveillant la caramélisation du miel",
+      "Badigeonner avec le reste de marinade en cours de cuisson si besoin",
+      "Laisser reposer 2-3 min avant de servir",
+    ],
+    notes: [
+      "Le miel caramélise vite — feu moyen plutôt que trop vif pour éviter que ça brûle.",
+      "Sans allergie — cette recette ne contient pas de fruits de mer, parfaite pour toute la famille.",
+    ],
+    cookMethod: "feux",
+  },
+  {
+    id: 14, name: "Poulet au curry, carottes & brocoli", subtitle: "Lait de coco, légumes fondants", category: "Poulet",
+    servings: 3, prepTime: 15, cookTime: 30, temp: null,
+    ingredients: [
+      { name: "Blancs de poulet coupés en morceaux", qty: 500, unit: "g" },
+      { name: "Carottes", qty: 2, unit: "" },
+      { name: "Brocoli en fleurettes", qty: 200, unit: "g" },
+      { name: "Oignon émincé", qty: 1, unit: "" },
+      { name: "Gousses d'ail écrasées", qty: 2, unit: "" },
+      { name: "Gingembre frais râpé", qty: 1, unit: "cac" },
+      { name: "Pâte de curry jaune", qty: 2, unit: "cas" },
+      { name: "Lait de coco", qty: 400, unit: "ml" },
+      { name: "Tomates concassées", qty: 200, unit: "g" },
+      { name: "Sauce soja", qty: 1, unit: "cas" },
+      { name: "Jus de citron vert", qty: 0.5, unit: "citron" },
+      { name: "Coriandre fraîche", qty: 1, unit: "poignée" },
+      { name: "Riz basmati", qty: 250, unit: "g" },
+    ],
+    prep: [
+      { ingredient: "Poulet — blancs / filets", action: "couper en morceaux" },
+      { ingredient: "Carottes", action: "éplucher et couper en rondelles" },
+      { ingredient: "Brocoli en fleurettes", action: "détailler en fleurettes" },
+      { ingredient: "Oignons", action: "émincer" },
+      { ingredient: "Ail", action: "écraser" },
+      { ingredient: "Gingembre frais râpé", action: "râper" },
+      { ingredient: "Coriandre fraîche", action: "ciseler" },
+      { ingredient: "Riz basmati", action: "rincer" },
+    ],
+    assembly: [
+      "Faire revenir l'oignon dans l'huile 3-4 min jusqu'à doré",
+      "Ajouter ail et gingembre, faire revenir 1 min",
+      "Ajouter la pâte de curry, torréfier 1 min en remuant",
+      "Ajouter le poulet, faire dorer 5 min sur toutes les faces",
+      "Ajouter les carottes en rondelles, verser le lait de coco et les tomates",
+      "Mijoter 15 min à feu doux",
+      "Ajouter le brocoli, poursuivre 8-10 min — rester légèrement croquant",
+      "Terminer avec sauce soja et jus de citron vert",
+      "En parallèle — cuire le riz basmati 12 min",
+      "Servir sur riz avec coriandre fraîche",
+    ],
+    steps: [
+      "Faire revenir l'oignon dans l'huile 3-4 min jusqu'à doré",
+      "Ajouter ail et gingembre, faire revenir 1 min",
+      "Ajouter la pâte de curry, torréfier 1 min en remuant",
+      "Ajouter le poulet, faire dorer 5 min sur toutes les faces",
+      "Ajouter les carottes, verser le lait de coco et les tomates concassées",
+      "Mijoter 15 min à feu doux",
+      "Ajouter le brocoli, poursuivre 8-10 min",
+      "Terminer avec sauce soja et jus de citron vert",
+      "Servir sur riz basmati avec coriandre fraîche",
+    ],
+    cookMethod: "feux",
+  },
+  {
+    id: 15, name: "Riz cantonais aux restes", subtitle: "Riz de la veille, jambon, petits pois, carottes", category: "Restes",
+    resteTags: ["riz"],
+    servings: 4, prepTime: 10, cookTime: 15, temp: null,
+    ingredients: [
+      { name: "Riz long grain cuit la veille (froid)", qty: 300, unit: "g" },
+      { name: "Œufs", qty: 3, unit: "" },
+      { name: "Jambon blanc en dés", qty: 150, unit: "g" },
+      { name: "Petits pois surgelés", qty: 150, unit: "g" },
+      { name: "Carottes en petits dés", qty: 1, unit: "" },
+      { name: "Oignon finement émincé", qty: 1, unit: "" },
+      { name: "Gousses d'ail hachées", qty: 2, unit: "" },
+      { name: "Sauce soja", qty: 2, unit: "cas" },
+      { name: "Huile neutre tournesol ou arachide", qty: 3, unit: "cas" },
+      { name: "Huile de sésame grillé", qty: 1, unit: "cac" },
+      { name: "Poivre", qty: 0.25, unit: "cac" },
+    ],
+    prep: [
+      { ingredient: "Carottes", action: "couper en tout petits dés" },
+      { ingredient: "Oignons", action: "émincer finement" },
+      { ingredient: "Ail", action: "hacher" },
+      { ingredient: "Jambon blanc en dés", action: "couper en dés" },
+    ],
+    assembly: [
+      "Sortir le riz du frigo bien froid et sec — c'est le secret pour qu'il ne colle pas",
+      "Chauffer le wok à feu très vif jusqu'à ce qu'il fume — ne pas précipiter",
+      "Ajouter l'huile neutre, faire sauter oignon et ail 2 min",
+      "Ajouter les carottes en dés, faire sauter 3 min",
+      "Ajouter les petits pois surgelés, faire sauter 2 min",
+      "Pousser les légumes sur le côté, scrambler les œufs dans le wok puis mélanger avec les légumes",
+      "Ajouter le riz froid, écraser les grains à la spatule, faire sauter à feu vif 3-4 min",
+      "Ajouter le jambon, la sauce soja et le poivre — mélanger vivement",
+      "Hors du feu, arroser d'huile de sésame",
+    ],
+    steps: [
+      "Sortir le riz du frigo bien froid et sec",
+      "Chauffer le wok à feu très vif jusqu'à ce qu'il fume",
+      "Ajouter l'huile neutre, faire sauter oignon et ail 2 min",
+      "Ajouter les carottes en dés, faire sauter 3 min",
+      "Ajouter les petits pois surgelés, faire sauter 2 min",
+      "Pousser les légumes sur le côté, scrambler les œufs puis mélanger avec les légumes",
+      "Ajouter le riz froid, écraser les grains, faire sauter à feu vif 3-4 min",
+      "Ajouter jambon, sauce soja et poivre — mélanger vivement",
+      "Hors du feu, arroser d'huile de sésame",
+    ],
+    notes: [
+      "Le secret — riz cuit la veille, bien froid et sec. Riz chaud = bouillie.",
+      "Le wok doit fumer avant que le riz n'y touche — la chaleur fait tout.",
+      "Variante restes — remplace le jambon par du poulet cuit, des crevettes ou du tofu.",
+      "Sans jambon à la maison — fonctionne très bien avec juste les légumes et les œufs.",
+    ],
+    cookMethod: "feux",
+  },
+  {
+    id: 16, name: "Quesadillas au poulet rôti", subtitle: "Restes de poulet, fromage fondu, poivron", category: "Restes",
+    resteTags: ["poulet"],
+    servings: 4, prepTime: 15, cookTime: 20, temp: null,
+    ingredients: [
+      { name: "Grandes tortillas de blé", qty: 8, unit: "" },
+      { name: "Poulet rôti effiloché", qty: 350, unit: "g" },
+      { name: "Fromage râpé mozzarella + cheddar ou gruyère", qty: 200, unit: "g" },
+      { name: "Oignon émincé finement", qty: 1, unit: "" },
+      { name: "Poivron rouge en petits dés", qty: 1, unit: "" },
+      { name: "Crème fraîche épaisse", qty: 3, unit: "cas" },
+      { name: "Paprika doux", qty: 1, unit: "cac" },
+      { name: "Cumin moulu", qty: 0.5, unit: "cac" },
+      { name: "Huile d'olive", qty: 1, unit: "cas" },
+      { name: "Beurre pour la cuisson", qty: 20, unit: "g" },
+    ],
+    prep: [
+      { ingredient: "Poulet — cuisses", action: "effilocher le poulet rôti froid" },
+      { ingredient: "Oignons", action: "émincer finement" },
+      { ingredient: "Poivron rouge en petits dés", action: "couper en petits dés" },
+    ],
+    assembly: [
+      "Faire revenir oignon et poivron dans l'huile d'olive 5 min jusqu'à tendres",
+      "Ajouter le poulet effiloché, paprika, cumin — mélanger et chauffer 2 min",
+      "Hors du feu, incorporer la crème fraîche",
+      "Poser une tortilla à plat — étaler une couche de fromage, puis la garniture poulet, puis une nouvelle couche de fromage — refermer avec une 2ème tortilla",
+      "Chauffer une poêle avec un peu de beurre à feu moyen",
+      "Cuire la quesadilla 2-3 min par face en appuyant bien avec la spatule — le fromage doit être fondu et la tortilla dorée",
+      "Répéter pour les 4 quesadillas",
+      "Couper en triangles et servir immédiatement",
+    ],
+    steps: [
+      "Faire revenir oignon et poivron dans l'huile 5 min jusqu'à tendres",
+      "Ajouter le poulet effiloché, paprika, cumin — chauffer 2 min",
+      "Hors du feu, incorporer la crème fraîche",
+      "Garnir les tortillas : fromage → garniture → fromage → tortilla par-dessus",
+      "Cuire 2-3 min par face en appuyant bien à la spatule",
+      "Couper en triangles et servir immédiatement",
+    ],
+    notes: [
+      "Le secret — fromage des deux côtés de la garniture pour que rien ne s'échappe à la découpe.",
+      "Bien tasser à la spatule pendant la cuisson pour une tortilla bien croustillante.",
+      "Parfait avec des restes de poulet rôti, shawarma ou tikka masala.",
+    ],
+    cookMethod: "feux",
+  },
+  {
+    id: 17, name: "Pâtes à la sauce grillade", subtitle: "Restes de viande grillée, sauce tomate maison", category: "Restes",
+    resteTags: ["viande grillée"],
+    servings: 4, prepTime: 10, cookTime: 20, temp: null,
+    ingredients: [
+      { name: "Restes de viande grillée émincée", qty: 300, unit: "g" },
+      { name: "Pâtes (penne ou tagliatelles)", qty: 400, unit: "g" },
+      { name: "Tomates concassées en boîte", qty: 400, unit: "g" },
+      { name: "Oignon émincé", qty: 1, unit: "" },
+      { name: "Gousses d'ail écrasées", qty: 2, unit: "" },
+      { name: "Concentré de tomates", qty: 1, unit: "cas" },
+      { name: "Basilic frais ou séché", qty: 1, unit: "poignée" },
+      { name: "Origan séché", qty: 1, unit: "cac" },
+      { name: "Parmesan râpé", qty: 40, unit: "g" },
+    ],
+    prep: [
+      { ingredient: "Oignons", action: "émincer" },
+      { ingredient: "Ail", action: "écraser" },
+      { ingredient: "Viande grillée", action: "émincer finement ou effilocher" },
+    ],
+    assembly: [
+      "Faire revenir l'oignon et l'ail dans l'huile d'olive 3 min",
+      "Ajouter la viande grillée émincée, faire revenir 2 min pour la réchauffer",
+      "Ajouter tomates concassées, concentré, origan, sel et poivre",
+      "Mijoter 15 min à feu doux — la sauce doit épaissir et enrober la viande",
+      "En parallèle — cuire les pâtes al dente",
+      "Mélanger pâtes et sauce, parsemer de basilic frais et parmesan",
+    ],
+    steps: [
+      "Faire revenir l'oignon et l'ail dans l'huile d'olive 3 min",
+      "Ajouter la viande grillée émincée, faire revenir 2 min",
+      "Ajouter tomates concassées, concentré, origan, sel et poivre",
+      "Mijoter 15 min à feu doux",
+      "Cuire les pâtes al dente en parallèle",
+      "Mélanger pâtes et sauce, parsemer de basilic et parmesan",
+    ],
+    notes: [
+      "Fonctionne avec n'importe quelle viande grillée — porc BBQ, bœuf, côtelettes.",
+      "La viande émincée finement s'intègre mieux dans la sauce que coupée en gros morceaux.",
+      "Un peu de vin rouge dans la sauce rehausse le goût de la viande grillée.",
+    ],
+    cookMethod: "feux",
+  },
+  ,
+  {
+    id: 18, name: "Nems façon Carole", subtitle: "Feuilles de riz, viande hachée, légumes", category: "Boeuf",
+    servings: 4, prepTime: 30, cookTime: 20, temp: null,
+    ingredients: [
+      { name: "Viande hachée", qty: 300, unit: "g" },
+      { name: "Vermicelles chinois coupés", qty: 1, unit: "paquet" },
+      { name: "Champignons noirs séchés réhydratés", qty: 4, unit: "" },
+      { name: "Oignons verts émincés", qty: 3, unit: "" },
+      { name: "Carottes râpées", qty: 2, unit: "" },
+      { name: "Oignon haché", qty: 1, unit: "" },
+      { name: "Persil ciselé", qty: 1, unit: "bouquet" },
+      { name: "Ciboulette ciselée", qty: 1, unit: "bouquet" },
+      { name: "Œuf", qty: 1, unit: "" },
+      { name: "Sauce soja", qty: 2, unit: "cas" },
+      { name: "Nuoc-mâm", qty: 2, unit: "cas" },
+      { name: "Feuilles de riz", qty: 20, unit: "" },
+      { name: "Huile pour friture", qty: 1, unit: "L" },
+    ],
+    prep: [
+      { ingredient: "Vermicelles chinois coupés", action: "réhydrater dans l'eau chaude 5 min puis couper en petits morceaux" },
+      { ingredient: "Champignons noirs séchés réhydratés", action: "réhydrater dans l'eau tiède 20 min puis émincer finement" },
+      { ingredient: "Carottes", action: "râper finement" },
+      { ingredient: "Oignons", action: "hacher" },
+      { ingredient: "Oignons verts émincés", action: "émincer" },
+      { ingredient: "Persil", action: "ciseler" },
+      { ingredient: "Ciboulette ciselée", action: "ciseler" },
+    ],
+    assembly: [
+      "Mélanger viande hachée, vermicelles, champignons, carottes râpées, oignon, oignons verts, persil, ciboulette, œuf, sauce soja et nuoc-mâm",
+      "Bien mélanger à la main — la farce doit être homogène",
+      "Tremper une feuille de riz 10-15 secondes dans l'eau tiède jusqu'à souple",
+      "Poser sur un torchon humide, déposer une cuillère de farce, replier les côtés et rouler bien serré",
+      "Répéter pour toutes les feuilles",
+      "Chauffer l'huile à 170°C — plonger les nems par petites quantités",
+      "Frire 4-5 min en retournant jusqu'à dorés et croustillants — égoutter sur papier absorbant",
+    ],
+    steps: [
+      "Réhydrater vermicelles et champignons noirs, couper finement",
+      "Mélanger tous les ingrédients de la farce à la main",
+      "Tremper les feuilles de riz une par une 10-15 sec dans l'eau tiède",
+      "Garnir, replier les côtés et rouler bien serré",
+      "Frire à 170°C par petites quantités — 4-5 min jusqu'à dorés",
+      "Égoutter sur papier absorbant, servir aussitôt",
+    ],
+    notes: [
+      "Batch cooking — les nems crus se congèlent très bien. Frire directement congelés, ajouter 2 min de cuisson.",
+      "Bien serrer le roulage pour éviter que les nems ne s'ouvrent à la friture.",
+      "Servir avec sauce nuoc-mâm citronnée et salade fraîche.",
+    ],
+    cookMethod: "feux",
+  },
+  {
+    id: 19, name: "Lentilles saucisse façon Carole", subtitle: "Lentilles vertes, Diot de Savoie ou Montbéliard", category: "Légumineuses",
+    servings: 4, prepTime: 15, cookTime: 40, temp: null,
+    ingredients: [
+      { name: "Lentilles vertes", qty: 300, unit: "g" },
+      { name: "Saucisses fumées Diot de Savoie ou Montbéliard", qty: 4, unit: "" },
+      { name: "Tomates concassées en boîte", qty: 400, unit: "g" },
+      { name: "Concentré de tomates", qty: 1, unit: "cas" },
+      { name: "Oignon haché", qty: 1, unit: "" },
+      { name: "Gousses d'ail", qty: 2, unit: "" },
+      { name: "Persil ciselé", qty: 1, unit: "bouquet" },
+      { name: "Herbes de Provence", qty: 1, unit: "cac" },
+      { name: "Feuille de laurier", qty: 1, unit: "" },
+    ],
+    prep: [
+      { ingredient: "Oignons", action: "hacher" },
+      { ingredient: "Ail", action: "écraser" },
+      { ingredient: "Persil", action: "ciseler" },
+      { ingredient: "Saucisses fumées Diot de Savoie ou Montbéliard", action: "couper en rondelles épaisses" },
+    ],
+    assembly: [
+      "Dans une casserole — couvrir les lentilles d'eau froide, ajouter sel, herbes de Provence et feuille de laurier, cuire 25 min à feu moyen",
+      "Dans une autre casserole — faire revenir oignon, saucisse coupée, ail et persil dans un filet d'huile",
+      "Ajouter concentré de tomates puis tomates concassées, mijoter 10 min",
+      "Égoutter les lentilles et les ajouter à la sauce tomate",
+      "Mélanger et laisser mijoter 10 min ensemble pour que les saveurs s'imprègnent",
+    ],
+    steps: [
+      "Cuire les lentilles dans l'eau salée avec herbes de Provence et laurier — 25 min",
+      "Faire revenir oignon, saucisse, ail et persil dans l'huile",
+      "Ajouter concentré de tomates et tomates concassées — mijoter 10 min",
+      "Égoutter les lentilles et les incorporer à la sauce",
+      "Mijoter encore 10 min ensemble",
+    ],
+    notes: [
+      "Le Diot de Savoie fumé donne plus de caractère — la Montbéliard est plus douce.",
+      "Encore meilleur réchauffé le lendemain.",
+      "Batch cooking — se congèle très bien.",
+    ],
+    cookMethod: "feux",
+  },
+  ,
+  {
+    id: 20, name: "Piadine jambon-tomate-fromage", subtitle: "Rapide, achetée toute faite", category: "Rapide",
+    servings: 3, prepTime: 5, cookTime: 5, temp: null,
+    ingredients: [
+      { name: "Piadines toutes faites", qty: 3, unit: "" },
+      { name: "Tranches de jambon blanc", qty: 6, unit: "" },
+      { name: "Tomates coupées en tranches", qty: 2, unit: "" },
+      { name: "Mozzarella ou fromage râpé", qty: 150, unit: "g" },
+    ],
+    prep: [
+      { ingredient: "Tomates", action: "couper en tranches fines" },
+    ],
+    assembly: [
+      "Garnir chaque piadine de jambon, tranches de tomates et fromage",
+      "Plier en deux",
+      "Chauffer 2 min dans une poêle sèche ou à la plancha jusqu'à fromage fondu et piadine dorée",
+    ],
+    steps: [
+      "Garnir chaque piadine de jambon, tranches de tomates et fromage",
+      "Plier en deux",
+      "Chauffer 2 min dans une poêle sèche ou à la plancha jusqu'à fromage fondu",
     ],
     cookMethod: "feux",
   },
@@ -955,10 +1258,13 @@ export default function BatchCooking() {
   const [detailServings, setDetailServings] = useState(2);
   const [recipeServings, setRecipeServings] = useState({});
   const [showSauceBlanche, setShowSauceBlanche] = useState(false);
+  const [restesSuggestion, setRestesSuggestion] = useState(null); // { tag, suggestions[] }
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [weekHistory, setWeekHistory] = useState([]);
   const [ownedIngredients, setOwnedIngredients] = useState({});
+  const [manualItems, setManualItems] = useState([]); // extra items added manually
+  const [manualInput, setManualInput] = useState("");
   const [showFinalList, setShowFinalList] = useState(false);
   const [savedShoppingLists, setSavedShoppingLists] = useState([]);
   const [viewingShoppingList, setViewingShoppingList] = useState(null);
@@ -976,8 +1282,14 @@ export default function BatchCooking() {
     ingredients: "", steps: ""
   });
 
-  const categories = ["Tous", ...Array.from(new Set(recipes.map(r => r.category)))];
-  const filtered = filterCat === "Tous" ? recipes : recipes.filter((r) => r.category === filterCat);
+  const categories = ["Tous", ...Array.from(new Set(recipes.map(r => r.category))).filter(c => c !== "Restes" && c)];
+  const [filterReste, setFilterReste] = useState(null);
+  const allResteTags = [...new Set(recipes.filter(r => r.resteTags).flatMap(r => r.resteTags))];
+  const filtered = (() => {
+    let list = filterCat === "Tous" ? recipes : recipes.filter(r => r.category === filterCat);
+    if (filterReste) list = list.filter(r => r.resteTags && r.resteTags.includes(filterReste));
+    return list;
+  })();
 
   // Load data from Supabase on mount
   useEffect(() => {
@@ -1054,6 +1366,29 @@ export default function BatchCooking() {
       setRecipeServings(prev => ({ ...prev, [recipe.id]: recipe.servings }));
       if (recipe.sauceBlanche) setTimeout(() => setShowSauceBlanche(true), 200);
       if (weekStatus === "idle") setWeekStatus("planning");
+      // Detect if this recipe generates leftovers matching a Restes recipe
+      const RESTE_TRIGGERS = {
+        "riz": ["riz", "basmati", "riz long grain"],
+        "poulet": ["poulet rôti", "poulet effiloché"],
+        "viande grillée": ["poitrine de porc", "côte", "grillade", "bbq"],
+      };
+      const resteRecipes = recipes.filter(r => r.resteTags);
+      const suggestions = [];
+      (recipe.ingredients || []).forEach(ing => {
+        const ingLower = stripAccents(ing.name.toLowerCase());
+        Object.entries(RESTE_TRIGGERS).forEach(([tag, keywords]) => {
+          if (keywords.some(kw => ingLower.includes(stripAccents(kw)))) {
+            resteRecipes.filter(r => r.resteTags.includes(tag)).forEach(resteRecipe => {
+              if (!suggestions.find(s => s.recipe.id === resteRecipe.id)) {
+                suggestions.push({ tag, recipe: resteRecipe });
+              }
+            });
+          }
+        });
+      });
+      if (suggestions.length > 0) {
+        setTimeout(() => setRestesSuggestion(suggestions), recipe.sauceBlanche ? 600 : 300);
+      }
     }
   };
 
@@ -1122,6 +1457,50 @@ export default function BatchCooking() {
   return (
     <div style={{ fontFamily: "'Georgia', 'Iowan Old Style', serif", background: COLORS.cream, minHeight: "100vh", color: COLORS.ink }}>
       <div style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
+
+        {/* RESTES SUGGESTION MODAL */}
+        {restesSuggestion && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(43,38,34,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+            onClick={() => setRestesSuggestion(null)}>
+            <div onClick={e => e.stopPropagation()} style={{
+              background: COLORS.card, borderRadius: 16, padding: 28, maxWidth: 380, width: "100%", border: `1px solid ${COLORS.line}`,
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: COLORS.gold, marginBottom: 6 }}>Astuce restes</div>
+              <h2 style={{ margin: "0 0 8px", fontSize: 19, fontWeight: 500, fontFamily: "Georgia, serif" }}>Tu vas avoir des restes 🍱</h2>
+              <p style={{ fontSize: 13, color: COLORS.inkMuted, marginBottom: 18, lineHeight: 1.5 }}>
+                Cette recette va te laisser des restes — voici ce que tu peux en faire :
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+                {restesSuggestion.map((s, i) => (
+                  <div key={i} style={{ background: COLORS.goldSoft, borderRadius: 12, padding: "12px 14px", border: `1px solid #e8d9a0` }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, fontFamily: "Georgia, serif", marginBottom: 2 }}>
+                      {s.recipe.name}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#7a5a1f" }}>
+                      Avec tes restes de {s.tag} · {s.recipe.prepTime + s.recipe.cookTime} min
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => {
+                restesSuggestion.forEach(s => {
+                  if (!selected.find(r => r.id === s.recipe.id)) {
+                    setSelected(prev => [...prev, s.recipe]);
+                    setRecipeServings(prev => ({ ...prev, [s.recipe.id]: s.recipe.servings }));
+                  }
+                });
+                setRestesSuggestion(null);
+              }} style={{
+                width: "100%", padding: 13, borderRadius: 10, border: "none",
+                background: COLORS.terracotta, color: "#fff", fontWeight: 500, fontSize: 14, cursor: "pointer", marginBottom: 8,
+              }}>Ajouter au batch</button>
+              <button onClick={() => setRestesSuggestion(null)} style={{
+                width: "100%", padding: 13, borderRadius: 10, border: `1px solid ${COLORS.line}`,
+                background: "transparent", color: COLORS.inkSoft, fontWeight: 500, fontSize: 14, cursor: "pointer",
+              }}>Non merci</button>
+            </div>
+          </div>
+        )}
 
         {/* SAUCE BLANCHE MODAL */}
         {showSauceBlanche && (
@@ -1734,11 +2113,11 @@ export default function BatchCooking() {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 0, flex: 1 }}>
                   {categories.map((cat) => (
-                    <button key={cat} onClick={() => setFilterCat(cat)} style={{
+                    <button key={cat} onClick={() => { setFilterCat(cat); setFilterReste(null); }} style={{
                       padding: "7px 15px", borderRadius: 20, whiteSpace: "nowrap", fontSize: 13, cursor: "pointer",
-                      border: `1px solid ${filterCat === cat ? COLORS.ink : COLORS.line}`,
-                      background: filterCat === cat ? COLORS.ink : "transparent",
-                      color: filterCat === cat ? "#fff" : COLORS.inkSoft, fontWeight: 500,
+                      border: `1px solid ${filterCat === cat && !filterReste ? COLORS.ink : COLORS.line}`,
+                      background: filterCat === cat && !filterReste ? COLORS.ink : "transparent",
+                      color: filterCat === cat && !filterReste ? "#fff" : COLORS.inkSoft, fontWeight: 500,
                     }}>{cat}</button>
                   ))}
                 </div>
@@ -1747,6 +2126,35 @@ export default function BatchCooking() {
                   background: COLORS.terracotta, color: "#fff", fontWeight: 500, fontSize: 13, cursor: "pointer",
                 }}>+ Recette</button>
               </div>
+
+              {/* Reste banner */}
+              {allResteTags.length > 0 && (
+                <div style={{ background: COLORS.goldSoft, borderRadius: 14, padding: "14px 16px", marginBottom: 20 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#7a5a1f", marginBottom: 10 }}>
+                    🍱 J'ai des restes de...
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {allResteTags.map(tag => (
+                      <button key={tag} onClick={() => {
+                        setFilterReste(filterReste === tag ? null : tag);
+                        setFilterCat("Tous");
+                      }} style={{
+                        padding: "6px 14px", borderRadius: 20, border: "none", fontSize: 13,
+                        background: filterReste === tag ? "#7a5a1f" : "#fff",
+                        color: filterReste === tag ? "#fff" : "#7a5a1f",
+                        fontWeight: 500, cursor: "pointer",
+                        boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                      }}>{tag}</button>
+                    ))}
+                    {filterReste && (
+                      <button onClick={() => setFilterReste(null)} style={{
+                        padding: "6px 14px", borderRadius: 20, border: `1px solid ${COLORS.line}`,
+                        background: "transparent", color: COLORS.inkMuted, fontSize: 13, cursor: "pointer",
+                      }}>✕ Effacer</button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
                 {filtered.map((recipe, idx) => {
@@ -1764,7 +2172,10 @@ export default function BatchCooking() {
                         </div>
                         {recipe.subtitle && <div style={{ fontSize: 13, color: COLORS.inkMuted, fontStyle: "italic", fontFamily: "Georgia, serif", marginBottom: 6 }}>{recipe.subtitle}</div>}
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <Pill tone="terracotta">{recipe.category}</Pill>
+                          {recipe.resteTags
+                            ? recipe.resteTags.map(tag => <Pill key={tag} tone="gold">Restes de {tag}</Pill>)
+                            : <Pill tone="terracotta">{recipe.category}</Pill>
+                          }
                           <span style={{ fontSize: 12, color: COLORS.inkMuted }}>{recipe.prepTime + recipe.cookTime} min</span>
                         </div>
                       </div>
@@ -1910,6 +2321,64 @@ export default function BatchCooking() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Manual items section */}
+              <div style={{ background: COLORS.card, borderRadius: 14, padding: 18, marginBottom: 16, border: `1px solid ${COLORS.line}` }}>
+                <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: COLORS.inkMuted, marginBottom: 12 }}>
+                  Ajouter un article
+                </div>
+                <div style={{ display: "flex", gap: 8, marginBottom: manualItems.length > 0 ? 14 : 0 }}>
+                  <input
+                    value={manualInput}
+                    onChange={e => setManualInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === "Enter" && manualInput.trim()) {
+                        setManualItems(prev => [...prev, { key: `manual-${Date.now()}`, name: manualInput.trim(), done: false }]);
+                        setManualInput("");
+                      }
+                    }}
+                    placeholder="Ex. lessive, shampooing..."
+                    style={{
+                      flex: 1, padding: "10px 13px", borderRadius: 10,
+                      border: `1px solid ${COLORS.line}`, fontSize: 14,
+                      background: COLORS.cream, fontFamily: "inherit",
+                    }}
+                  />
+                  <button onClick={() => {
+                    if (manualInput.trim()) {
+                      setManualItems(prev => [...prev, { key: `manual-${Date.now()}`, name: manualInput.trim(), done: false }]);
+                      setManualInput("");
+                    }
+                  }} style={{
+                    padding: "10px 16px", borderRadius: 10, border: "none",
+                    background: COLORS.terracotta, color: "#fff", fontWeight: 600, fontSize: 14, cursor: "pointer", flexShrink: 0,
+                  }}>+</button>
+                </div>
+                {manualItems.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column" }}>
+                    {manualItems.map((item, i) => (
+                      <div key={item.key} style={{
+                        display: "flex", gap: 10, padding: "8px 0", alignItems: "center",
+                        borderBottom: i < manualItems.length - 1 ? `1px solid ${COLORS.line}` : "none",
+                        opacity: item.done ? 0.4 : 1,
+                      }}>
+                        <span onClick={() => setManualItems(prev => prev.map(it => it.key === item.key ? { ...it, done: !it.done } : it))} style={{
+                          width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                          border: `1.5px solid ${item.done ? COLORS.sage : COLORS.line}`,
+                          background: item.done ? COLORS.sage : "transparent",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 10, color: "#fff", cursor: "pointer",
+                        }}>{item.done ? "✓" : ""}</span>
+                        <span style={{ flex: 1, fontSize: 14, color: COLORS.inkSoft, textDecoration: item.done ? "line-through" : "none" }}>{item.name}</span>
+                        <button onClick={() => setManualItems(prev => prev.filter(it => it.key !== item.key))} style={{
+                          background: "transparent", border: "none", color: COLORS.inkMuted,
+                          fontSize: 16, cursor: "pointer", padding: "0 4px",
+                        }}>×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <button onClick={() => {
