@@ -1275,83 +1275,6 @@ function ServingsControl({ value, onChange, compact }) {
   );
 }
 
-function PlanningView({ weekPlan, setWeekPlan, selected }) {
-  const [pickingDay, setPickingDay] = React.useState(null);
-  const days = ["Lun", "Mar", "Mer", "Jeu", "Ven"];
-  const emoji = r => !r ? "🍽️" : r.category === "Poulet" ? "🍗" : r.category === "Boeuf" ? "🥩" : r.category === "Porc" ? "🐷" : r.category === "Rapide" ? "⚡" : "🍽️";
-
-  return (
-    <div>
-      <div style={{ marginBottom: 20 }}>
-        <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 500, fontFamily: "Georgia, serif" }}>Ma semaine</h2>
-        <p style={{ fontSize: 13, color: COLORS.inkMuted, margin: 0 }}>Appuie sur un jour pour choisir le plat</p>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 20 }}>
-        {days.map(day => (
-          <div key={day}>
-            <div style={{ fontSize: 11, color: COLORS.inkMuted, textAlign: "center", marginBottom: 6, fontWeight: 500 }}>{day}</div>
-            <div onClick={() => setPickingDay(pickingDay === day ? null : day)} style={{
-              minHeight: 88, borderRadius: 12,
-              border: "1.5px " + (pickingDay === day ? "solid " + COLORS.terracotta : weekPlan[day] ? "solid " + COLORS.line : "dashed " + COLORS.line),
-              background: pickingDay === day ? COLORS.terracottaSoft : weekPlan[day] ? COLORS.card : "transparent",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", padding: 6,
-            }}>
-              {weekPlan[day] ? (
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 22, marginBottom: 3 }}>{emoji(weekPlan[day])}</div>
-                  <div style={{ fontSize: 9, fontWeight: 500, color: COLORS.ink, lineHeight: 1.3 }}>
-                    {weekPlan[day].name.length > 12 ? weekPlan[day].name.slice(0, 11) + "…" : weekPlan[day].name}
-                  </div>
-                </div>
-              ) : (
-                <span style={{ fontSize: 20, color: COLORS.line }}>+</span>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-      {pickingDay && (
-        <div style={{ background: COLORS.card, borderRadius: 16, border: "1px solid " + COLORS.line, marginBottom: 16, overflow: "hidden" }}>
-          <div style={{ padding: "12px 16px", borderBottom: "1px solid " + COLORS.line, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 14, fontWeight: 500 }}>Que manges-tu {pickingDay} ?</span>
-            <button onClick={() => setPickingDay(null)} style={{ background: "transparent", border: "none", fontSize: 20, cursor: "pointer", color: COLORS.inkMuted }}>×</button>
-          </div>
-          {weekPlan[pickingDay] && (
-            <div onClick={() => { setWeekPlan(prev => ({ ...prev, [pickingDay]: null })); setPickingDay(null); }}
-              style={{ padding: "12px 16px", fontSize: 13, color: "#c0392b", borderBottom: "1px solid " + COLORS.line, cursor: "pointer" }}>
-              Retirer ce plat
-            </div>
-          )}
-          {selected.length === 0 ? (
-            <div style={{ padding: 16, fontSize: 13, color: COLORS.inkMuted }}>Sélectionne des recettes dans l'onglet Recettes d'abord</div>
-          ) : selected.map(recipe => (
-            <div key={recipe.id}
-              onClick={() => { setWeekPlan(prev => ({ ...prev, [pickingDay]: recipe })); setPickingDay(null); }}
-              style={{
-                padding: "13px 16px", display: "flex", alignItems: "center", gap: 12,
-                cursor: "pointer", borderBottom: "1px solid " + COLORS.line,
-                background: weekPlan[pickingDay] && weekPlan[pickingDay].id === recipe.id ? COLORS.terracottaSoft : "transparent",
-              }}>
-              <span style={{ fontSize: 22 }}>{emoji(recipe)}</span>
-              <span style={{ fontSize: 14, fontFamily: "Georgia, serif", fontWeight: 500, flex: 1 }}>{recipe.name}</span>
-              {weekPlan[pickingDay] && weekPlan[pickingDay].id === recipe.id && <span style={{ color: COLORS.terracotta }}>✓</span>}
-            </div>
-          ))}
-        </div>
-      )}
-      {Object.values(weekPlan).some(v => !v) && selected.length > 0 && (
-        <div style={{ background: COLORS.goldSoft, borderRadius: 12, padding: "10px 14px" }}>
-          <p style={{ fontSize: 12, color: "#7a5a1f", margin: 0 }}>
-            {Object.entries(weekPlan).filter(([, v]) => !v).map(([k]) => k).join(", ")} — pas encore planifié
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
 export default function BatchCooking() {
   const [recipes, setRecipes] = useState(INITIAL_RECIPES);
   const [selected, setSelected] = useState([]);
@@ -1363,10 +1286,10 @@ export default function BatchCooking() {
   const [detailServings, setDetailServings] = useState(2);
   const [recipeServings, setRecipeServings] = useState({});
   const [showSauceBlanche, setShowSauceBlanche] = useState(false);
-  const [restesSuggestion, setRestesSuggestion] = useState(null);
-  const [weekPlan, setWeekPlan] = useState({ Lun: null, Mar: null, Mer: null, Jeu: null, Ven: null });
-  const [draggedRecipe, setDraggedRecipe] = useState(null); // { tag, suggestions[] }
+  const [restesSuggestion, setRestesSuggestion] = useState(null); // { tag, suggestions[] }
   const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [weekPlan, setWeekPlan] = useState({ Lun: null, Mar: null, Mer: null, Jeu: null, Ven: null });
+  const [planPickingDay, setPlanPickingDay] = useState(null);
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [weekHistory, setWeekHistory] = useState([]);
   const [ownedIngredients, setOwnedIngredients] = useState({});
@@ -1456,54 +1379,23 @@ export default function BatchCooking() {
         if (dbLists && dbLists.length > 0) {
           setSavedShoppingLists(dbLists.map(l => ({ label: l.label, date: l.date, recipes: l.recipes, list: l.list, dbId: l.id })));
         }
-        // Restore current week — Supabase first, localStorage fallback
-        let cwData = null;
+        // Restore current week from localStorage
         try {
-          const cw = await db.loadCurrentWeek();
-          if (cw && cw.week_status && cw.week_status !== "idle") {
-            cwData = {
-              weekStatus: cw.week_status,
-              recipeServings: cw.recipe_servings || {},
-              ownedIngredients: cw.owned_ingredients || {},
-              manualItems: cw.manual_items || [],
-              activeShoppingList: cw.active_shopping_list || null,
-              selectedRecipes: cw.selected_recipes || [],
-              weekPlan: cw.week_plan || { Lun: null, Mar: null, Mer: null, Jeu: null, Ven: null },
-            };
-          }
-        } catch(e) {}
-        if (!cwData) {
-          try {
-            const raw = localStorage.getItem("carnet_current_week");
-            if (raw) {
-              const cw = JSON.parse(raw);
-              if (cw.weekStatus && cw.weekStatus !== "idle") {
-                cwData = {
-                  weekStatus: cw.weekStatus,
-                  recipeServings: cw.recipeServings || {},
-                  ownedIngredients: cw.ownedIngredients || {},
-                  manualItems: cw.manualItems || [],
-                  activeShoppingList: cw.activeShoppingList || null,
-                  selectedIds: cw.selectedIds || [],
-                  weekPlan: cw.weekPlan || { Lun: null, Mar: null, Mer: null, Jeu: null, Ven: null },
-                };
+          const raw = localStorage.getItem("carnet_current_week");
+          if (raw) {
+            const cw = JSON.parse(raw);
+            if (cw.weekStatus && cw.weekStatus !== "idle") {
+              setWeekStatus(cw.weekStatus);
+              if (cw.recipeServings) setRecipeServings(cw.recipeServings);
+              if (cw.ownedIngredients) setOwnedIngredients(cw.ownedIngredients);
+              if (cw.manualItems) setManualItems(cw.manualItems);
+              if (cw.activeShoppingList) setActiveShoppingList(cw.activeShoppingList);
+              if (cw.selectedIds && cw.selectedIds.length > 0) {
+                window.__pendingSelectedIds = cw.selectedIds;
               }
             }
-          } catch(e) {}
-        }
-        if (cwData) {
-          setWeekStatus(cwData.weekStatus);
-          setRecipeServings(cwData.recipeServings);
-          setOwnedIngredients(cwData.ownedIngredients);
-          setManualItems(cwData.manualItems);
-          if (cwData.activeShoppingList) setActiveShoppingList(cwData.activeShoppingList);
-          if (cwData.weekPlan) setWeekPlan(cwData.weekPlan);
-          if (cwData.selectedRecipes && cwData.selectedRecipes.length > 0) {
-            setSelected(cwData.selectedRecipes);
-          } else if (cwData.selectedIds && cwData.selectedIds.length > 0) {
-            window.__pendingSelectedIds = cwData.selectedIds;
           }
-        }
+        } catch(e) {}
       } catch (e) {
         console.error("Supabase load error:", e);
       }
@@ -1513,6 +1405,7 @@ export default function BatchCooking() {
   }, []);
 
   // Auto-save current week state whenever key state changes
+  // Save current week to localStorage whenever key state changes
   const [appReady, setAppReady] = useState(false);
   useEffect(() => {
     if (!appReady) return;
@@ -1520,24 +1413,9 @@ export default function BatchCooking() {
       weekStatus, recipeServings, ownedIngredients, manualItems,
       selectedIds: selected.map(r => r.id),
       activeShoppingList: activeShoppingList || null,
-      weekPlan,
     };
-    // Save to localStorage (fast)
     try { localStorage.setItem("carnet_current_week", JSON.stringify(data)); } catch(e) {}
-    // Save to Supabase (persistent across devices)
-    const timer = setTimeout(() => {
-      db.saveCurrentWeek({
-        week_status: weekStatus || "idle",
-        selected_recipes: selected,
-        recipe_servings: recipeServings,
-        active_shopping_list: activeShoppingList || null,
-        owned_ingredients: ownedIngredients,
-        manual_items: manualItems,
-        week_plan: weekPlan,
-      }).catch(() => {});
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [weekStatus, selected, recipeServings, activeShoppingList, ownedIngredients, manualItems, weekPlan, appReady]);
+  }, [weekStatus, selected, recipeServings, activeShoppingList, ownedIngredients, manualItems, appReady]);
 
   const toggleSelect = (recipe) => {
     const isCurrentlySelected = selected.find((r) => r.id === recipe.id);
@@ -2170,7 +2048,7 @@ export default function BatchCooking() {
               { key: "select",   label: "Recettes", icon: "📖" },
               { key: "shopping", label: "Courses",  icon: "🛒", active: view === "shopping" || view === "batch" },
               { key: "plan",     label: "Cuisine",  icon: "👨‍🍳", active: view === "plan" },
-              { key: "planning", label: "Semaine",  icon: "📅" },
+              { key: "semaine",  label: "Semaine",  icon: "📅" },
               { key: "history",  label: "Archives", icon: "🕐" },
             ].map((tab) => {
               const isActive = tab.active !== undefined ? tab.active : view === tab.key;
@@ -2719,10 +2597,65 @@ export default function BatchCooking() {
           )}
 
 
-
-          {/* PLANNING VIEW */}
-          {view === "planning" && (
-            <PlanningView weekPlan={weekPlan} setWeekPlan={setWeekPlan} selected={selected} />
+          {view === "semaine" && (
+            <div>
+              <div style={{ marginBottom: 20 }}>
+                <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 500, fontFamily: "Georgia, serif" }}>Ma semaine</h2>
+                <p style={{ fontSize: 13, color: COLORS.inkMuted, margin: 0 }}>Appuie sur un jour pour choisir le plat</p>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 20 }}>
+                {["Lun","Mar","Mer","Jeu","Ven"].map(day => (
+                  <div key={day}>
+                    <div style={{ fontSize: 11, color: COLORS.inkMuted, textAlign: "center", marginBottom: 6, fontWeight: 500 }}>{day}</div>
+                    <div onClick={() => setPlanPickingDay(planPickingDay === day ? null : day)} style={{
+                      minHeight: 88, borderRadius: 12,
+                      border: "1.5px " + (planPickingDay === day ? "solid " + COLORS.terracotta : weekPlan[day] ? "solid " + COLORS.line : "dashed " + COLORS.line),
+                      background: planPickingDay === day ? COLORS.terracottaSoft : weekPlan[day] ? COLORS.card : "transparent",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer", padding: 6,
+                    }}>
+                      {weekPlan[day] ? (
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ fontSize: 22, marginBottom: 3 }}>
+                            {weekPlan[day].category === "Poulet" ? "🍗" : weekPlan[day].category === "Boeuf" ? "🥩" : weekPlan[day].category === "Porc" ? "🐷" : "🍽️"}
+                          </div>
+                          <div style={{ fontSize: 9, fontWeight: 500, color: COLORS.ink, lineHeight: 1.3 }}>
+                            {weekPlan[day].name.length > 12 ? weekPlan[day].name.slice(0,11) + "…" : weekPlan[day].name}
+                          </div>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: 20, color: COLORS.line }}>+</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {planPickingDay && (
+                <div style={{ background: COLORS.card, borderRadius: 16, border: "1px solid " + COLORS.line, marginBottom: 16, overflow: "hidden" }}>
+                  <div style={{ padding: "12px 16px", borderBottom: "1px solid " + COLORS.line, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>Que manges-tu {planPickingDay} ?</span>
+                    <button onClick={() => setPlanPickingDay(null)} style={{ background: "transparent", border: "none", fontSize: 20, cursor: "pointer", color: COLORS.inkMuted }}>×</button>
+                  </div>
+                  {weekPlan[planPickingDay] && (
+                    <div onClick={() => { setWeekPlan(prev => ({ ...prev, [planPickingDay]: null })); setPlanPickingDay(null); }}
+                      style={{ padding: "12px 16px", fontSize: 13, color: "#c0392b", borderBottom: "1px solid " + COLORS.line, cursor: "pointer" }}>
+                      Retirer ce plat
+                    </div>
+                  )}
+                  {selected.length === 0 ? (
+                    <div style={{ padding: 16, fontSize: 13, color: COLORS.inkMuted }}>Sélectionne des recettes dans Recettes d'abord</div>
+                  ) : selected.map(r => (
+                    <div key={r.id} onClick={() => { setWeekPlan(prev => ({ ...prev, [planPickingDay]: r })); setPlanPickingDay(null); }}
+                      style={{ padding: "13px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", borderBottom: "1px solid " + COLORS.line,
+                        background: weekPlan[planPickingDay] && weekPlan[planPickingDay].id === r.id ? COLORS.terracottaSoft : "transparent" }}>
+                      <span style={{ fontSize: 22 }}>{r.category === "Poulet" ? "🍗" : r.category === "Boeuf" ? "🥩" : r.category === "Porc" ? "🐷" : "🍽️"}</span>
+                      <span style={{ fontSize: 14, fontFamily: "Georgia, serif", fontWeight: 500, flex: 1 }}>{r.name}</span>
+                      {weekPlan[planPickingDay] && weekPlan[planPickingDay].id === r.id && <span style={{ color: COLORS.terracotta }}>✓</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {/* HISTORY VIEW */}
