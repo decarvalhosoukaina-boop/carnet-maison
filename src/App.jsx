@@ -1275,6 +1275,175 @@ function ServingsControl({ value, onChange, compact }) {
   );
 }
 
+function PlanningView({ weekPlan, setWeekPlan, selected, COLORS }) {
+  const [dragging, setDragging] = React.useState(null);
+  const [dragPos, setDragPos] = React.useState({ x: 0, y: 0 });
+  const [overDay, setOverDay] = React.useState(null);
+  const dayRefs = React.useRef({});
+  const days = ["Lun", "Mar", "Mer", "Jeu", "Ven"];
+
+  const emoji = r => !r ? "🍽️" :
+    r.category === "Poulet" ? "🍗" :
+    r.category === "Boeuf" ? "🥩" :
+    r.category === "Porc" ? "🐷" :
+    r.category === "Rapide" ? "⚡" : "🍽️";
+
+  const getDayFromPos = (x, y) => days.find(day => {
+    const el = dayRefs.current[day];
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  }) || null;
+
+  // Touch
+  const handleTouchStart = (e, recipe) => {
+    const t = e.touches[0];
+    setDragging(recipe);
+    setDragPos({ x: t.clientX, y: t.clientY });
+    e.preventDefault();
+  };
+  const handleTouchMove = (e) => {
+    if (!dragging) return;
+    const t = e.touches[0];
+    setDragPos({ x: t.clientX, y: t.clientY });
+    setOverDay(getDayFromPos(t.clientX, t.clientY));
+    e.preventDefault();
+  };
+  const handleTouchEnd = (e) => {
+    if (!dragging) return;
+    const t = e.changedTouches[0];
+    const day = getDayFromPos(t.clientX, t.clientY);
+    if (day) setWeekPlan(prev => ({ ...prev, [day]: dragging }));
+    setDragging(null);
+    setOverDay(null);
+  };
+
+  // Mouse
+  const handleMouseDown = (e, recipe) => {
+    setDragging(recipe);
+    setDragPos({ x: e.clientX, y: e.clientY });
+    e.preventDefault();
+  };
+  React.useEffect(() => {
+    const onMove = e => {
+      if (!dragging) return;
+      setDragPos({ x: e.clientX, y: e.clientY });
+      setOverDay(getDayFromPos(e.clientX, e.clientY));
+    };
+    const onUp = e => {
+      if (!dragging) return;
+      const day = getDayFromPos(e.clientX, e.clientY);
+      if (day) setWeekPlan(prev => ({ ...prev, [day]: dragging }));
+      setDragging(null);
+      setOverDay(null);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+  }, [dragging]);
+
+  return (
+    <div onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
+      style={{ touchAction: dragging ? "none" : "auto", userSelect: "none" }}>
+      {dragging && (
+        <div style={{
+          position: "fixed", left: dragPos.x - 70, top: dragPos.y - 30,
+          zIndex: 999, pointerEvents: "none",
+          background: COLORS.card, borderRadius: 12, padding: "10px 14px",
+          border: "2px solid " + COLORS.terracotta,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
+          display: "flex", alignItems: "center", gap: 8, minWidth: 130,
+        }}>
+          <span style={{ fontSize: 20 }}>{emoji(dragging)}</span>
+          <span style={{ fontSize: 12, fontWeight: 500, color: COLORS.ink, fontFamily: "Georgia, serif" }}>
+            {dragging.name.length > 14 ? dragging.name.slice(0, 12) + "…" : dragging.name}
+          </span>
+        </div>
+      )}
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 500, fontFamily: "Georgia, serif" }}>Ma semaine</h2>
+        <p style={{ fontSize: 13, color: COLORS.inkMuted, margin: 0 }}>Glisse un plat sur un jour · Appuie sur un jour pour le retirer</p>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 24 }}>
+        {days.map(day => (
+          <div key={day}>
+            <div style={{ fontSize: 11, color: COLORS.inkMuted, textAlign: "center", marginBottom: 6, fontWeight: 500 }}>{day}</div>
+            <div ref={el => dayRefs.current[day] = el}
+              onClick={() => !dragging && weekPlan[day] && setWeekPlan(prev => ({ ...prev, [day]: null }))}
+              style={{
+                minHeight: 88, borderRadius: 12,
+                border: "1.5px " + (overDay === day ? "solid " + COLORS.terracotta : weekPlan[day] ? "solid " + COLORS.line : "dashed " + COLORS.line),
+                background: overDay === day ? COLORS.terracottaSoft : weekPlan[day] ? COLORS.card : "transparent",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                padding: 6, transition: "background 0.1s, border-color 0.1s",
+                cursor: weekPlan[day] && !dragging ? "pointer" : "default",
+              }}>
+              {weekPlan[day] ? (
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 22, marginBottom: 3 }}>{emoji(weekPlan[day])}</div>
+                  <div style={{ fontSize: 9, fontWeight: 500, color: COLORS.ink, lineHeight: 1.3 }}>
+                    {weekPlan[day].name.length > 12 ? weekPlan[day].name.slice(0, 11) + "…" : weekPlan[day].name}
+                  </div>
+                  <div style={{ fontSize: 8, color: COLORS.inkMuted, marginTop: 2 }}>appuie pour retirer</div>
+                </div>
+              ) : (
+                <span style={{ fontSize: 20, color: overDay === day ? COLORS.terracotta : COLORS.line }}>
+                  {overDay === day ? "✓" : "+"}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ borderTop: "0.5px solid " + COLORS.line, paddingTop: 14 }}>
+        <p style={{ fontSize: 11, fontWeight: 600, color: COLORS.inkMuted, textTransform: "uppercase", letterSpacing: "0.04em", margin: "0 0 10px" }}>
+          Plats du batch — glisse sur un jour
+        </p>
+        {selected.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "20px 0", color: COLORS.inkMuted, fontSize: 13 }}>
+            Sélectionne des recettes dans l'onglet Recettes d'abord
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {selected.map(recipe => (
+              <div key={recipe.id}
+                onMouseDown={e => handleMouseDown(e, recipe)}
+                onTouchStart={e => handleTouchStart(e, recipe)}
+                style={{
+                  background: dragging && dragging.id === recipe.id ? COLORS.terracottaSoft : COLORS.card,
+                  border: "0.5px solid " + (dragging && dragging.id === recipe.id ? COLORS.terracotta : COLORS.line),
+                  borderRadius: 12, padding: "13px 16px",
+                  display: "flex", alignItems: "center", gap: 12,
+                  cursor: "grab", touchAction: "none",
+                  opacity: Object.values(weekPlan).some(p => p && p.id === recipe.id) ? 0.45 : 1,
+                }}>
+                <span style={{ fontSize: 24 }}>{emoji(recipe)}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "Georgia, serif" }}>{recipe.name}</div>
+                  <div style={{ fontSize: 11, color: COLORS.inkMuted }}>
+                    {Object.values(weekPlan).some(p => p && p.id === recipe.id)
+                      ? "Planifié — " + Object.entries(weekPlan).filter(([, p]) => p && p.id === recipe.id).map(([d]) => d).join(", ")
+                      : "Glisse sur un jour ↑"}
+                  </div>
+                </div>
+                <span style={{ fontSize: 16, color: COLORS.line }}>⠿</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {Object.values(weekPlan).some(v => !v) && selected.length > 0 && (
+        <div style={{ background: COLORS.goldSoft, borderRadius: 12, padding: "10px 14px", marginTop: 16 }}>
+          <p style={{ fontSize: 12, color: "#7a5a1f", margin: 0 }}>
+            {Object.entries(weekPlan).filter(([, v]) => !v).map(([k]) => k).join(", ")} — pas encore planifié
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 export default function BatchCooking() {
   const [recipes, setRecipes] = useState(INITIAL_RECIPES);
   const [selected, setSelected] = useState([]);
@@ -1379,23 +1548,54 @@ export default function BatchCooking() {
         if (dbLists && dbLists.length > 0) {
           setSavedShoppingLists(dbLists.map(l => ({ label: l.label, date: l.date, recipes: l.recipes, list: l.list, dbId: l.id })));
         }
-        // Restore current week from localStorage
+        // Restore current week — Supabase first, localStorage fallback
+        let cwData = null;
         try {
-          const raw = localStorage.getItem("carnet_current_week");
-          if (raw) {
-            const cw = JSON.parse(raw);
-            if (cw.weekStatus && cw.weekStatus !== "idle") {
-              setWeekStatus(cw.weekStatus);
-              if (cw.recipeServings) setRecipeServings(cw.recipeServings);
-              if (cw.ownedIngredients) setOwnedIngredients(cw.ownedIngredients);
-              if (cw.manualItems) setManualItems(cw.manualItems);
-              if (cw.activeShoppingList) setActiveShoppingList(cw.activeShoppingList);
-              if (cw.selectedIds && cw.selectedIds.length > 0) {
-                window.__pendingSelectedIds = cw.selectedIds;
-              }
-            }
+          const cw = await db.loadCurrentWeek();
+          if (cw && cw.week_status && cw.week_status !== "idle") {
+            cwData = {
+              weekStatus: cw.week_status,
+              recipeServings: cw.recipe_servings || {},
+              ownedIngredients: cw.owned_ingredients || {},
+              manualItems: cw.manual_items || [],
+              activeShoppingList: cw.active_shopping_list || null,
+              selectedRecipes: cw.selected_recipes || [],
+              weekPlan: cw.week_plan || { Lun: null, Mar: null, Mer: null, Jeu: null, Ven: null },
+            };
           }
         } catch(e) {}
+        if (!cwData) {
+          try {
+            const raw = localStorage.getItem("carnet_current_week");
+            if (raw) {
+              const cw = JSON.parse(raw);
+              if (cw.weekStatus && cw.weekStatus !== "idle") {
+                cwData = {
+                  weekStatus: cw.weekStatus,
+                  recipeServings: cw.recipeServings || {},
+                  ownedIngredients: cw.ownedIngredients || {},
+                  manualItems: cw.manualItems || [],
+                  activeShoppingList: cw.activeShoppingList || null,
+                  selectedIds: cw.selectedIds || [],
+                  weekPlan: cw.weekPlan || { Lun: null, Mar: null, Mer: null, Jeu: null, Ven: null },
+                };
+              }
+            }
+          } catch(e) {}
+        }
+        if (cwData) {
+          setWeekStatus(cwData.weekStatus);
+          setRecipeServings(cwData.recipeServings);
+          setOwnedIngredients(cwData.ownedIngredients);
+          setManualItems(cwData.manualItems);
+          if (cwData.activeShoppingList) setActiveShoppingList(cwData.activeShoppingList);
+          if (cwData.weekPlan) setWeekPlan(cwData.weekPlan);
+          if (cwData.selectedRecipes && cwData.selectedRecipes.length > 0) {
+            setSelected(cwData.selectedRecipes);
+          } else if (cwData.selectedIds && cwData.selectedIds.length > 0) {
+            window.__pendingSelectedIds = cwData.selectedIds;
+          }
+        }
       } catch (e) {
         console.error("Supabase load error:", e);
       }
@@ -1405,7 +1605,6 @@ export default function BatchCooking() {
   }, []);
 
   // Auto-save current week state whenever key state changes
-  // Save current week to localStorage whenever key state changes
   const [appReady, setAppReady] = useState(false);
   useEffect(() => {
     if (!appReady) return;
@@ -1413,9 +1612,24 @@ export default function BatchCooking() {
       weekStatus, recipeServings, ownedIngredients, manualItems,
       selectedIds: selected.map(r => r.id),
       activeShoppingList: activeShoppingList || null,
+      weekPlan,
     };
+    // Save to localStorage (fast)
     try { localStorage.setItem("carnet_current_week", JSON.stringify(data)); } catch(e) {}
-  }, [weekStatus, selected, recipeServings, activeShoppingList, ownedIngredients, manualItems, appReady]);
+    // Save to Supabase (persistent across devices)
+    const timer = setTimeout(() => {
+      db.saveCurrentWeek({
+        week_status: weekStatus || "idle",
+        selected_recipes: selected,
+        recipe_servings: recipeServings,
+        active_shopping_list: activeShoppingList || null,
+        owned_ingredients: ownedIngredients,
+        manual_items: manualItems,
+        week_plan: weekPlan,
+      }).catch(() => {});
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [weekStatus, selected, recipeServings, activeShoppingList, ownedIngredients, manualItems, weekPlan, appReady]);
 
   const toggleSelect = (recipe) => {
     const isCurrentlySelected = selected.find((r) => r.id === recipe.id);
@@ -2600,106 +2814,7 @@ export default function BatchCooking() {
 
           {/* PLANNING VIEW */}
           {view === "planning" && (
-            <div>
-              <div style={{ marginBottom: 20 }}>
-                <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 500, fontFamily: "Georgia, serif" }}>Ma semaine</h2>
-                <p style={{ fontSize: 13, color: COLORS.inkMuted, margin: 0 }}>Glisse chaque plat sur le jour de ton choix</p>
-              </div>
-
-              {/* Days grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 20 }}>
-                {["Lun", "Mar", "Mer", "Jeu", "Ven"].map(day => (
-                  <div key={day}>
-                    <div style={{ fontSize: 11, color: COLORS.inkMuted, textAlign: "center", marginBottom: 6, fontWeight: 500 }}>{day}</div>
-                    <div
-                      onDragOver={e => e.preventDefault()}
-                      onDrop={e => {
-                        e.preventDefault();
-                        if (draggedRecipe) {
-                          setWeekPlan(prev => ({ ...prev, [day]: draggedRecipe }));
-                          setDraggedRecipe(null);
-                        }
-                      }}
-                      onClick={() => {
-                        if (weekPlan[day]) setWeekPlan(prev => ({ ...prev, [day]: null }));
-                      }}
-                      style={{
-                        minHeight: 90, borderRadius: 12, border: `1.5px dashed ${weekPlan[day] ? "transparent" : COLORS.line}`,
-                        background: weekPlan[day] ? COLORS.card : "transparent",
-                        boxShadow: weekPlan[day] ? `0 2px 8px rgba(0,0,0,0.06)` : "none",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        cursor: weekPlan[day] ? "pointer" : "default",
-                        transition: "all 0.15s", padding: 8,
-                      }}>
-                      {weekPlan[day] ? (
-                        <div style={{ textAlign: "center" }}>
-                          <div style={{ fontSize: 24, marginBottom: 4 }}>
-                            {weekPlan[day].category === "Poulet" ? "🍗" :
-                             weekPlan[day].category === "Boeuf" ? "🥩" :
-                             weekPlan[day].category === "Porc" ? "🐷" :
-                             weekPlan[day].category === "Rapide" ? "⚡" : "🍽️"}
-                          </div>
-                          <div style={{ fontSize: 10, fontWeight: 500, color: COLORS.ink, lineHeight: 1.3 }}>
-                            {weekPlan[day].name.length > 14 ? weekPlan[day].name.slice(0, 12) + "…" : weekPlan[day].name}
-                          </div>
-                          <div style={{ fontSize: 9, color: COLORS.inkMuted, marginTop: 2 }}>× appui pour retirer</div>
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: 18, color: COLORS.line }}>+</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Unplanned days warning */}
-              {Object.values(weekPlan).some(v => !v) && (
-                <div style={{ background: COLORS.goldSoft, borderRadius: 12, padding: "10px 14px", marginBottom: 16 }}>
-                  <p style={{ fontSize: 12, color: "#7a5a1f", margin: 0 }}>
-                    {Object.entries(weekPlan).filter(([, v]) => !v).map(([k]) => k).join(", ")} — pas encore planifié
-                  </p>
-                </div>
-              )}
-
-              {/* Draggable recipes */}
-              <div style={{ borderTop: `0.5px solid ${COLORS.line}`, paddingTop: 16 }}>
-                <p style={{ fontSize: 12, color: COLORS.inkMuted, margin: "0 0 10px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.04em", fontSize: 11 }}>Plats du batch — à placer</p>
-                {selected.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "20px 0", color: COLORS.inkMuted, fontSize: 13 }}>
-                    Sélectionne des recettes dans l'onglet Recettes d'abord
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {selected.map(recipe => (
-                      <div
-                        key={recipe.id}
-                        draggable
-                        onDragStart={() => setDraggedRecipe(recipe)}
-                        onDragEnd={() => setDraggedRecipe(null)}
-                        style={{
-                          background: COLORS.card, border: `0.5px solid ${COLORS.line}`,
-                          borderRadius: 12, padding: "12px 16px",
-                          display: "flex", alignItems: "center", gap: 12,
-                          cursor: "grab", userSelect: "none",
-                          opacity: Object.values(weekPlan).some(p => p && p.id === recipe.id) ? 0.4 : 1,
-                        }}>
-                        <span style={{ fontSize: 24 }}>
-                          {recipe.category === "Poulet" ? "🍗" :
-                           recipe.category === "Boeuf" ? "🥩" :
-                           recipe.category === "Porc" ? "🐷" :
-                           recipe.category === "Rapide" ? "⚡" : "🍽️"}
-                        </span>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "Georgia, serif" }}>{recipe.name}</div>
-                          <div style={{ fontSize: 11, color: COLORS.inkMuted }}>Glisse sur un jour</div>
-                        </div>
-                        <span style={{ fontSize: 18, color: COLORS.line }}>⠿</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <PlanningView weekPlan={weekPlan} setWeekPlan={setWeekPlan} selected={selected} COLORS={COLORS} />
           )}
 
           {/* HISTORY VIEW */}
