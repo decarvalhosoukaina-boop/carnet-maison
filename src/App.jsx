@@ -1371,31 +1371,23 @@ export default function BatchCooking() {
           if (cw.owned_ingredients) setOwnedIngredients(cw.owned_ingredients);
           if (cw.manual_items) setManualItems(cw.manual_items);
           if (cw.active_shopping_list) setActiveShoppingList(cw.active_shopping_list);
-          // Restore selected recipes from ids
+          // Restore selected recipes — stored as full objects
           if (cw.selected_recipes && cw.selected_recipes.length > 0) {
-            // We need to wait for recipes to be loaded first — store ids temporarily
-            window.__pendingSelectedIds = cw.selected_recipes;
+            setSelected(cw.selected_recipes);
           }
         }
       } catch (e) {
         console.error("Supabase load error:", e);
       }
+      setAppReady(true);
     };
     load();
   }, []);
 
-  // Restore selected recipes once recipes are loaded
-  useEffect(() => {
-    if (recipes.length > 0 && window.__pendingSelectedIds) {
-      const ids = window.__pendingSelectedIds;
-      const restored = ids.map(id => recipes.find(r => r.id === id)).filter(Boolean);
-      if (restored.length > 0) setSelected(restored);
-      window.__pendingSelectedIds = null;
-    }
-  }, [recipes]);
-
   // Auto-save current week state whenever key state changes
+  const [appReady, setAppReady] = useState(false);
   useEffect(() => {
+    if (!appReady) return; // don't save until app has finished loading
     if (weekStatus === "idle") {
       db.saveCurrentWeek({ week_status: "idle", selected_recipes: [], recipe_servings: {}, active_shopping_list: null, owned_ingredients: {}, manual_items: [] }).catch(() => {});
       return;
@@ -1403,7 +1395,7 @@ export default function BatchCooking() {
     const saveTimer = setTimeout(() => {
       db.saveCurrentWeek({
         week_status: weekStatus,
-        selected_recipes: selected.map(r => r.id),
+        selected_recipes: selected,
         recipe_servings: recipeServings,
         active_shopping_list: activeShoppingList || null,
         owned_ingredients: ownedIngredients,
@@ -1411,7 +1403,7 @@ export default function BatchCooking() {
       }).catch(() => {});
     }, 800);
     return () => clearTimeout(saveTimer);
-  }, [weekStatus, selected, recipeServings, activeShoppingList, ownedIngredients, manualItems]);
+  }, [weekStatus, selected, recipeServings, activeShoppingList, ownedIngredients, manualItems, appReady]);
 
   const toggleSelect = (recipe) => {
     const isCurrentlySelected = selected.find((r) => r.id === recipe.id);
