@@ -1276,170 +1276,72 @@ function ServingsControl({ value, onChange, compact }) {
 }
 
 function PlanningView({ weekPlan, setWeekPlan, selected, COLORS }) {
-  const [dragging, setDragging] = React.useState(null);
-  const [dragPos, setDragPos] = React.useState({ x: 0, y: 0 });
-  const [overDay, setOverDay] = React.useState(null);
-  const dayRefs = React.useRef({});
+  const [pickingDay, setPickingDay] = React.useState(null);
   const days = ["Lun", "Mar", "Mer", "Jeu", "Ven"];
-
-  const emoji = r => !r ? "🍽️" :
-    r.category === "Poulet" ? "🍗" :
-    r.category === "Boeuf" ? "🥩" :
-    r.category === "Porc" ? "🐷" :
-    r.category === "Rapide" ? "⚡" : "🍽️";
-
-  const getDayFromPos = (x, y) => days.find(day => {
-    const el = dayRefs.current[day];
-    if (!el) return false;
-    const rect = el.getBoundingClientRect();
-    return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-  }) || null;
-
-  // Touch
-  const handleTouchStart = (e, recipe) => {
-    const t = e.touches[0];
-    setDragging(recipe);
-    setDragPos({ x: t.clientX, y: t.clientY });
-    e.preventDefault();
-  };
-  const handleTouchMove = (e) => {
-    if (!dragging) return;
-    const t = e.touches[0];
-    setDragPos({ x: t.clientX, y: t.clientY });
-    setOverDay(getDayFromPos(t.clientX, t.clientY));
-    e.preventDefault();
-  };
-  const handleTouchEnd = (e) => {
-    if (!dragging) return;
-    const t = e.changedTouches[0];
-    const day = getDayFromPos(t.clientX, t.clientY);
-    if (day) setWeekPlan(prev => ({ ...prev, [day]: dragging }));
-    setDragging(null);
-    setOverDay(null);
-  };
-
-  // Mouse
-  const handleMouseDown = (e, recipe) => {
-    setDragging(recipe);
-    setDragPos({ x: e.clientX, y: e.clientY });
-    e.preventDefault();
-  };
-  React.useEffect(() => {
-    if (!dragging) return;
-    const dayRefsSnapshot = dayRefs.current;
-    const getDayFromPosLocal = (x, y) => ["Lun","Mar","Mer","Jeu","Ven"].find(day => {
-      const el = dayRefsSnapshot[day];
-      if (!el) return false;
-      const rect = el.getBoundingClientRect();
-      return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-    }) || null;
-    const onMove = e => {
-      setDragPos({ x: e.clientX, y: e.clientY });
-      setOverDay(getDayFromPosLocal(e.clientX, e.clientY));
-    };
-    const onUp = e => {
-      const day = getDayFromPosLocal(e.clientX, e.clientY);
-      if (day) setWeekPlan(prev => ({ ...prev, [day]: dragging }));
-      setDragging(null);
-      setOverDay(null);
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    return () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
-  }, [dragging]);
+  const emoji = r => !r ? "🍽️" : r.category === "Poulet" ? "🍗" : r.category === "Boeuf" ? "🥩" : r.category === "Porc" ? "🐷" : r.category === "Rapide" ? "⚡" : "🍽️";
 
   return (
-    <div onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
-      style={{ touchAction: dragging ? "none" : "auto", userSelect: "none" }}>
-      {dragging && (
-        <div style={{
-          position: "fixed", left: dragPos.x - 70, top: dragPos.y - 30,
-          zIndex: 999, pointerEvents: "none",
-          background: COLORS.card, borderRadius: 12, padding: "10px 14px",
-          border: "2px solid " + COLORS.terracotta,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
-          display: "flex", alignItems: "center", gap: 8, minWidth: 130,
-        }}>
-          <span style={{ fontSize: 20 }}>{emoji(dragging)}</span>
-          <span style={{ fontSize: 12, fontWeight: 500, color: COLORS.ink, fontFamily: "Georgia, serif" }}>
-            {dragging.name.length > 14 ? dragging.name.slice(0, 12) + "…" : dragging.name}
-          </span>
-        </div>
-      )}
+    <div>
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 500, fontFamily: "Georgia, serif" }}>Ma semaine</h2>
-        <p style={{ fontSize: 13, color: COLORS.inkMuted, margin: 0 }}>Glisse un plat sur un jour · Appuie sur un jour pour le retirer</p>
+        <p style={{ fontSize: 13, color: COLORS.inkMuted, margin: 0 }}>Appuie sur un jour pour choisir le plat</p>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 20 }}>
         {days.map(day => (
           <div key={day}>
             <div style={{ fontSize: 11, color: COLORS.inkMuted, textAlign: "center", marginBottom: 6, fontWeight: 500 }}>{day}</div>
-            <div ref={el => dayRefs.current[day] = el}
-              onClick={() => !dragging && weekPlan[day] && setWeekPlan(prev => ({ ...prev, [day]: null }))}
-              style={{
-                minHeight: 88, borderRadius: 12,
-                border: "1.5px " + (overDay === day ? "solid " + COLORS.terracotta : weekPlan[day] ? "solid " + COLORS.line : "dashed " + COLORS.line),
-                background: overDay === day ? COLORS.terracottaSoft : weekPlan[day] ? COLORS.card : "transparent",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                padding: 6, transition: "background 0.1s, border-color 0.1s",
-                cursor: weekPlan[day] && !dragging ? "pointer" : "default",
-              }}>
+            <div onClick={() => setPickingDay(pickingDay === day ? null : day)} style={{
+              minHeight: 88, borderRadius: 12,
+              border: "1.5px " + (pickingDay === day ? "solid " + COLORS.terracotta : weekPlan[day] ? "solid " + COLORS.line : "dashed " + COLORS.line),
+              background: pickingDay === day ? COLORS.terracottaSoft : weekPlan[day] ? COLORS.card : "transparent",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", padding: 6,
+            }}>
               {weekPlan[day] ? (
                 <div style={{ textAlign: "center" }}>
                   <div style={{ fontSize: 22, marginBottom: 3 }}>{emoji(weekPlan[day])}</div>
                   <div style={{ fontSize: 9, fontWeight: 500, color: COLORS.ink, lineHeight: 1.3 }}>
                     {weekPlan[day].name.length > 12 ? weekPlan[day].name.slice(0, 11) + "…" : weekPlan[day].name}
                   </div>
-                  <div style={{ fontSize: 8, color: COLORS.inkMuted, marginTop: 2 }}>appuie pour retirer</div>
                 </div>
               ) : (
-                <span style={{ fontSize: 20, color: overDay === day ? COLORS.terracotta : COLORS.line }}>
-                  {overDay === day ? "✓" : "+"}
-                </span>
+                <span style={{ fontSize: 20, color: COLORS.line }}>+</span>
               )}
             </div>
           </div>
         ))}
       </div>
-      <div style={{ borderTop: "0.5px solid " + COLORS.line, paddingTop: 14 }}>
-        <p style={{ fontSize: 11, fontWeight: 600, color: COLORS.inkMuted, textTransform: "uppercase", letterSpacing: "0.04em", margin: "0 0 10px" }}>
-          Plats du batch — glisse sur un jour
-        </p>
-        {selected.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "20px 0", color: COLORS.inkMuted, fontSize: 13 }}>
-            Sélectionne des recettes dans l'onglet Recettes d'abord
+      {pickingDay && (
+        <div style={{ background: COLORS.card, borderRadius: 16, border: "1px solid " + COLORS.line, marginBottom: 16, overflow: "hidden" }}>
+          <div style={{ padding: "12px 16px", borderBottom: "1px solid " + COLORS.line, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 14, fontWeight: 500 }}>Que manges-tu {pickingDay} ?</span>
+            <button onClick={() => setPickingDay(null)} style={{ background: "transparent", border: "none", fontSize: 20, cursor: "pointer", color: COLORS.inkMuted }}>×</button>
           </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {selected.map(recipe => (
-              <div key={recipe.id}
-                onMouseDown={e => handleMouseDown(e, recipe)}
-                onTouchStart={e => handleTouchStart(e, recipe)}
-                style={{
-                  background: dragging && dragging.id === recipe.id ? COLORS.terracottaSoft : COLORS.card,
-                  border: "0.5px solid " + (dragging && dragging.id === recipe.id ? COLORS.terracotta : COLORS.line),
-                  borderRadius: 12, padding: "13px 16px",
-                  display: "flex", alignItems: "center", gap: 12,
-                  cursor: "grab", touchAction: "none",
-                  opacity: Object.values(weekPlan).some(p => p && p.id === recipe.id) ? 0.45 : 1,
-                }}>
-                <span style={{ fontSize: 24 }}>{emoji(recipe)}</span>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, fontFamily: "Georgia, serif" }}>{recipe.name}</div>
-                  <div style={{ fontSize: 11, color: COLORS.inkMuted }}>
-                    {Object.values(weekPlan).some(p => p && p.id === recipe.id)
-                      ? "Planifié — " + Object.entries(weekPlan).filter(([, p]) => p && p.id === recipe.id).map(([d]) => d).join(", ")
-                      : "Glisse sur un jour ↑"}
-                  </div>
-                </div>
-                <span style={{ fontSize: 16, color: COLORS.line }}>⠿</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+          {weekPlan[pickingDay] && (
+            <div onClick={() => { setWeekPlan(prev => ({ ...prev, [pickingDay]: null })); setPickingDay(null); }}
+              style={{ padding: "12px 16px", fontSize: 13, color: "#c0392b", borderBottom: "1px solid " + COLORS.line, cursor: "pointer" }}>
+              Retirer ce plat
+            </div>
+          )}
+          {selected.length === 0 ? (
+            <div style={{ padding: 16, fontSize: 13, color: COLORS.inkMuted }}>Sélectionne des recettes dans l'onglet Recettes d'abord</div>
+          ) : selected.map(recipe => (
+            <div key={recipe.id}
+              onClick={() => { setWeekPlan(prev => ({ ...prev, [pickingDay]: recipe })); setPickingDay(null); }}
+              style={{
+                padding: "13px 16px", display: "flex", alignItems: "center", gap: 12,
+                cursor: "pointer", borderBottom: "1px solid " + COLORS.line,
+                background: weekPlan[pickingDay] && weekPlan[pickingDay].id === recipe.id ? COLORS.terracottaSoft : "transparent",
+              }}>
+              <span style={{ fontSize: 22 }}>{emoji(recipe)}</span>
+              <span style={{ fontSize: 14, fontFamily: "Georgia, serif", fontWeight: 500, flex: 1 }}>{recipe.name}</span>
+              {weekPlan[pickingDay] && weekPlan[pickingDay].id === recipe.id && <span style={{ color: COLORS.terracotta }}>✓</span>}
+            </div>
+          ))}
+        </div>
+      )}
       {Object.values(weekPlan).some(v => !v) && selected.length > 0 && (
-        <div style={{ background: COLORS.goldSoft, borderRadius: 12, padding: "10px 14px", marginTop: 16 }}>
+        <div style={{ background: COLORS.goldSoft, borderRadius: 12, padding: "10px 14px" }}>
           <p style={{ fontSize: 12, color: "#7a5a1f", margin: 0 }}>
             {Object.entries(weekPlan).filter(([, v]) => !v).map(([k]) => k).join(", ")} — pas encore planifié
           </p>
