@@ -1338,37 +1338,9 @@ export default function BatchCooking() {
             steps: r.steps || [], notes: r.notes || [],
             sauceIngredients: r.sauce_ingredients || [],
           }));
-          // Merge: keep INITIAL_RECIPES not in db, add db ones
           const dbIds = new Set(mapped.map(r => r.id));
           const localOnly = INITIAL_RECIPES.filter(r => !dbIds.has(r.id));
           setRecipes([...localOnly, ...mapped]);
-          // Sync local recipes to db
-          for (const r of INITIAL_RECIPES) {
-            if (!dbIds.has(r.id)) {
-              await db.upsert("recipes", {
-                id: r.id, name: r.name, subtitle: r.subtitle || "", category: r.category,
-                servings: r.servings, prep_time: r.prepTime, cook_time: r.cookTime,
-                temp: r.temp, cook_method: r.cookMethod, marinade_note: r.marinadeNote || null,
-                sauce_blanche: r.sauceBlanche || false, ingredients: r.ingredients,
-                prep: r.prep || [], assembly: r.assembly || [],
-                steps: r.steps, notes: r.notes || [],
-                sauce_ingredients: r.sauceIngredients || [],
-              });
-            }
-          }
-        } else {
-          // First time — push all INITIAL_RECIPES to db
-          for (const r of INITIAL_RECIPES) {
-            await db.upsert("recipes", {
-              id: r.id, name: r.name, subtitle: r.subtitle || "", category: r.category,
-              servings: r.servings, prep_time: r.prepTime, cook_time: r.cookTime,
-              temp: r.temp, cook_method: r.cookMethod, marinade_note: r.marinadeNote || null,
-              sauce_blanche: r.sauceBlanche || false, ingredients: r.ingredients,
-              prep: r.prep || [], assembly: r.assembly || [],
-              steps: r.steps, notes: r.notes || [],
-              sauce_ingredients: r.sauceIngredients || [],
-            });
-          }
         }
         // Load week history
         const dbHistory = await db.get("week_history");
