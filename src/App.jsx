@@ -988,12 +988,113 @@ function buildMutualizedPrep(selected, recipeServings) {
   });
 }
 
+function buildMiseEnPlace(selected, recipeServings) {
+  // Fresh ingredients to take out of the fridge/freezer — NOT spices, oils, condiments.
+  const FRESH_KEYWORDS = ["poulet", "boeuf", "bœuf", "porc", "viande", "saucisse", "lardons", "jambon", "poitrine", "paleron", "cuisse", "blanc", "filet",
+    "carotte", "oignon", "courgette", "poireau", "champignon", "tomate", "poivron", "ail", "citron", "brocoli", "pomme de terre", "patate", "échalote", "gingembre",
+    "crème", "beurre", "yaourt", "fromage", "mozzarella", "parmesan", "gruyère", "burrata", "lait", "œuf", "oeuf",
+    "persil", "coriandre", "ciboulette", "menthe", "basilic", "citronnelle", "aneth", "estragon"];
+  const EXCLUDE = ["huile", "sel", "poivre", "eau", "épice", "cumin", "paprika", "curcuma", "cannelle", "curry", "moutarde", "soja", "vinaigre", "sucre", "miel",
+    "bouillon", "concentré", "farine", "maïzena", "riz", "pâtes", "boulgour", "lentille", "chapelure", "passata", "coco", "badiane", "safran", "nuoc", "espelette",
+    "herbes de provence", "origan", "thym", "laurier", "ras el hanout", "sumac", "cardamome", "olives", "citron confit", "pita", "tortilla", "piadine", "feuille", "vermicelle", "pâte de curry", "cornichons", "noix de cajou", "sauce"];
+
+  const fresh = {};
+  selected.forEach(recipe => {
+    const srv = recipeServings[recipe.id] || recipe.servings;
+    (recipe.ingredients || []).forEach(ing => {
+      const nameLower = stripAccents(ing.name.toLowerCase());
+      const isExcluded = EXCLUDE.some(kw => nameLower.includes(stripAccents(kw)));
+      const isFresh = FRESH_KEYWORDS.some(kw => nameLower.includes(stripAccents(kw)));
+      if (isFresh && !isExcluded) {
+        const canonical = normalizeIngredientName(ing.name);
+        const key = stripAccents(canonical.toLowerCase());
+        const scaledNum = parseFloat(scaleQty(ing.qty, recipe.servings, srv));
+        if (!fresh[key]) {
+          fresh[key] = { name: canonical, key: "mep-" + key, totalQty: scaledNum, unit: ing.unit || "" };
+        } else if (fresh[key].unit === (ing.unit || "")) {
+          fresh[key].totalQty += scaledNum;
+        }
+      }
+    });
+  });
+  return Object.values(fresh).map(f => {
+    const rounded = f.totalQty === Math.floor(f.totalQty) ? f.totalQty : parseFloat(f.totalQty.toFixed(1));
+    const qtyDisplay = f.unit ? `${rounded} ${f.unit}` : `${rounded}`;
+    return { name: f.name, key: f.key, qty: qtyDisplay };
+  });
+}
+
+function injectQuantities(assemblySteps, ingredients, recipe, srv) {
+  // Insert quantities directly into the step text with a spoon estimate for chopped items
+  // since everything is mixed in a shared bowl during batch cooking.
+  const scaled = ingredients.map(ing => ({
+    canonical: stripAccents(normalizeIngredientName(ing.name).toLowerCase()),
+    name: stripAccents(ing.name.toLowerCase()),
+    rawQty: parseFloat(scaleQty(ing.qty, recipe.servings, srv)),
+    qty: ing.unit ? `${scaleQty(ing.qty, recipe.servings, srv)} ${ing.unit}` : `${scaleQty(ing.qty, recipe.servings, srv)}`,
+  }));
+
+  // Spoon equivalents per unit of chopped ingredient (c.à.s = cuillère à soupe, c.à.c = café)
+  const spoonConv = {
+    oignon: { per: 4, unit: "c.à.s" },
+    ail: { per: 1, unit: "c.à.c" },
+    carotte: { per: 3, unit: "c.à.s" },
+    courgette: { per: 4, unit: "c.à.s" },
+    poireau: { per: 3, unit: "c.à.s" },
+    champignon: { per: 3, unit: "c.à.s" },
+    gingembre: { per: 1, unit: "c.à.c" },
+  };
+
+  const spoonFor = (keys, rawQty) => {
+    const found = Object.keys(spoonConv).find(k => keys.some(key => stripAccents(key).includes(k)));
+    if (!found || !rawQty) return null;
+    const total = Math.round(spoonConv[found].per * rawQty);
+    if (total <= 0) return null;
+    return `~${total} ${spoonConv[found].unit}`;
+  };
+
+  const mappings = [
+    { rx: /\b(oignons?)\b/i, keys: ["oignon"] },
+    { rx: /\b(ail)\b/i, keys: ["ail", "gousse"] },
+    { rx: /\b(carottes?)\b/i, keys: ["carotte"] },
+    { rx: /\b(courgette)\b/i, keys: ["courgette"] },
+    { rx: /\b(poireaux?)\b/i, keys: ["poireau"] },
+    { rx: /\b(champignons?)\b/i, keys: ["champignon"] },
+    { rx: /\b(poivron)\b/i, keys: ["poivron"] },
+    { rx: /\b(gingembre)\b/i, keys: ["gingembre"] },
+    { rx: /\b(brocoli)\b/i, keys: ["brocoli"] },
+    { rx: /\b(crème|creme)\b/i, keys: ["creme"] },
+  ];
+
+  return assemblySteps.map(text => {
+    let result = text;
+    mappings.forEach(m => {
+      if (m.rx.test(result)) {
+        const ing = scaled.find(si => m.keys.some(k => si.canonical.includes(stripAccents(k)) || si.name.includes(stripAccents(k))));
+        if (ing && !result.includes("(" + ing.qty) && !result.includes("(~")) {
+          const spoon = spoonFor(m.keys, ing.rawQty);
+          const label = spoon ? `${ing.qty}, ${spoon}` : ing.qty;
+          result = result.replace(m.rx, (match) => `${match} (${label})`);
+        }
+      }
+    });
+    return result;
+  });
+}
+
+
 function generateBatchPlan(selected, recipeServings) {
   if (selected.length === 0) return [];
   const fourItems = selected.filter((r) => r.cookMethod === "four");
   const feuxItems = selected.filter((r) => r.cookMethod === "feux");
   const steps = [];
   let time = 0;
+
+  // Step 0 — mise en place (fresh ingredients out of the fridge)
+  const miseEnPlace = buildMiseEnPlace(selected, recipeServings);
+  if (miseEnPlace.length > 0) {
+    steps.push({ time: 0, label: "Mise en place — sortir le frais", miseEnPlace, type: "mep" });
+  }
 
   if (fourItems.length > 0) {
     const maxTemp = Math.max(...fourItems.map((r) => r.temp || 180));
@@ -1010,26 +1111,41 @@ function generateBatchPlan(selected, recipeServings) {
   }
   time = totalPrep;
 
-  if (fourItems.length > 0) {
-    const assemblyItems = fourItems.map(r => ({
+  // Split assembly into hors-feu (cold prep) vs cuisson (on heat/oven), per recipe
+  const CUISSON_VERBS = ["mijoter", "cuire", "revenir", "dorer", "enfourner", "griller", "chauffer", "bouillir", "frire", "saisir", "rissoler", "sauter", "gratiner", "réchauffer", "porter à ébullition", "déglacer", "verser le bouillon", "laisser cuire", "laisser mijoter", "torréfier", "colorer"];
+  const HORS_FEU_VERBS = ["mariner", "mélanger", "melanger", "écraser", "ecraser", "former", "façonner", "faconner", "fouetter", "enrober", "monter", "mixer", "filmer", "réserver", "reserver", "garnir", "remplir", "tremper", "rouler"];
+  const isHorsFeu = stepText => {
+    const lower = stripAccents(stepText.toLowerCase());
+    // Cooking verb anywhere → it's cuisson, even if it also contains a cold verb
+    if (CUISSON_VERBS.some(v => lower.includes(stripAccents(v)))) return false;
+    // Otherwise, cold verb at the start → hors-feu
+    return HORS_FEU_VERBS.some(v => lower.startsWith(stripAccents(v)));
+  };
+
+  const cookRecipes = selected.map(r => {
+    const steps2 = injectQuantities(r.assembly || [], r.ingredients || [], r, recipeServings[r.id] || r.servings);
+    const horsFeu = [];
+    const cuisson = [];
+    steps2.forEach(s => {
+      if (isHorsFeu(s)) horsFeu.push(s);
+      else cuisson.push(s);
+    });
+    return {
       recipeName: r.name,
       marinadeNote: r.marinadeNote || null,
-      assembly: r.assembly || [],
+      horsFeu, cuisson,
+      cookMethod: r.cookMethod,
       cookTime: r.cookTime,
       temp: r.temp,
-    }));
-    steps.push({ time, label: `Assembler et enfourner — ${fourItems.map((r) => r.name).join(", ")}`, assemblyItems, type: "cook" });
+    };
+  });
+
+  const hasHorsFeu = cookRecipes.some(r => r.horsFeu.length > 0);
+  if (hasHorsFeu) {
+    steps.push({ time, label: "Préparation hors-feu", horsFeuItems: cookRecipes.filter(r => r.horsFeu.length > 0), type: "horsfeu" });
   }
-  if (feuxItems.length > 0) {
-    const assemblyItems = feuxItems.map(r => ({
-      recipeName: r.name,
-      marinadeNote: r.marinadeNote || null,
-      assembly: r.assembly || [],
-      cookTime: r.cookTime,
-      temp: null,
-    }));
-    steps.push({ time, label: "Assembler et lancer sur les feux, en parallèle", assemblyItems, type: "cook" });
-  }
+  steps.push({ time, label: "Cuisson — en parallèle", cuissonItems: cookRecipes, type: "cuisson" });
+
   const maxCook = Math.max(...selected.map((r) => r.cookTime));
   const midPoint = Math.floor(maxCook / 2);
   steps.push({ time: time + midPoint, label: "Vérifier la cuisson à mi-parcours", detail: selected.map((r) => `${r.name} — ${r.cookTime - midPoint} min restantes`).join("\n"), type: "check" });
@@ -1281,6 +1397,7 @@ export default function BatchCooking() {
   const [view, setView] = useState("home");
   const [filterCat, setFilterCat] = useState("Tous");
   const [expandedStep, setExpandedStep] = useState(null);
+  const [mepChecked, setMepChecked] = useState({});
   const [batchPlan, setBatchPlan] = useState([]);
   const [detailRecipe, setDetailRecipe] = useState(null);
   const [detailServings, setDetailServings] = useState(2);
@@ -1301,6 +1418,7 @@ export default function BatchCooking() {
   const [viewingShoppingList, setViewingShoppingList] = useState(null);
   const [ambiguousPoultry, setAmbiguousPoultry] = useState(null);
   const [editingRecipe, setEditingRecipe] = useState(null); // recipe being edited
+  const [adjustingRecipe, setAdjustingRecipe] = useState(null); // recipe whose quantities are being tuned
   const [confirmDelete, setConfirmDelete] = useState(null); // { type: "recipe"|"list", item }
   // weekStatus tracks where the person is in the real-life journey:
   // "planning" -> choosing recipes, "shopping" -> list generated, waiting to shop,
@@ -1796,6 +1914,96 @@ export default function BatchCooking() {
           </div>
         )}
 
+        {/* QUANTITY ADJUSTER MODAL */}
+        {adjustingRecipe && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(43,38,34,0.5)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}
+            onClick={() => setAdjustingRecipe(null)}>
+            <div style={{ background: COLORS.cream, borderRadius: "20px 20px 0 0", padding: 24, maxWidth: 600, width: "100%", maxHeight: "85vh", overflowY: "auto" }}
+              onClick={e => e.stopPropagation()}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+                <h2 style={{ margin: 0, fontSize: 19, fontWeight: 500, fontFamily: "Georgia, serif" }}>Ajuster les quantités</h2>
+                <button onClick={() => setAdjustingRecipe(null)} style={{ background: "transparent", border: `1px solid ${COLORS.line}`, borderRadius: "50%", width: 32, height: 32, fontSize: 16, cursor: "pointer", color: COLORS.inkSoft, flexShrink: 0 }}>×</button>
+              </div>
+              <p style={{ fontSize: 13, color: COLORS.inkMuted, margin: "0 0 20px" }}>{adjustingRecipe.name} — enregistré pour toute la famille</p>
+
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {(adjustingRecipe.ingredients || []).map((ing, idx) => {
+                  const step = ing.unit === "g" || ing.unit === "ml" ? 50 : ing.unit === "kg" || ing.unit === "l" ? 0.1 : 1;
+                  const setQty = (newQty) => {
+                    const q = Math.max(0, Math.round(newQty * 100) / 100);
+                    setAdjustingRecipe(prev => ({
+                      ...prev,
+                      ingredients: prev.ingredients.map((it, i) => i === idx ? { ...it, qty: q } : it),
+                    }));
+                  };
+                  return (
+                    <div key={idx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 0", borderBottom: `0.5px solid ${COLORS.line}` }}>
+                      <button onClick={() => setAdjustingRecipe(prev => ({ ...prev, ingredients: prev.ingredients.filter((_, i) => i !== idx) }))}
+                        style={{ width: 24, height: 24, borderRadius: 6, border: "1px solid #f5c6c6", background: "#fff5f5", color: "#c0392b", fontSize: 14, cursor: "pointer", flexShrink: 0, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
+                      <span style={{ flex: 1, fontSize: 14, color: COLORS.ink }}>{ing.name}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <button onClick={() => setQty(ing.qty - step)} style={{
+                          width: 30, height: 30, borderRadius: 8, border: `1px solid ${COLORS.line}`,
+                          background: COLORS.card, fontSize: 18, cursor: "pointer", color: COLORS.inkSoft, lineHeight: 1,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>−</button>
+                        <span style={{ fontSize: 14, fontWeight: 600, minWidth: 58, textAlign: "center", color: COLORS.terracotta }}>
+                          {ing.qty}{ing.unit ? ` ${ing.unit}` : ""}
+                        </span>
+                        <button onClick={() => setQty(ing.qty + step)} style={{
+                          width: 30, height: 30, borderRadius: 8, border: `1px solid ${COLORS.line}`,
+                          background: COLORS.card, fontSize: 18, cursor: "pointer", color: COLORS.inkSoft, lineHeight: 1,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>+</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Add ingredient */}
+              <div style={{ marginTop: 14, padding: 14, background: COLORS.card, borderRadius: 12, border: `1px solid ${COLORS.line}` }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.inkMuted, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 10 }}>Ajouter un ingrédient</div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input id="new-ing-qty" type="number" placeholder="Qté" defaultValue="1"
+                    style={{ width: 55, padding: "9px 8px", borderRadius: 8, border: `1px solid ${COLORS.line}`, fontSize: 13, background: COLORS.cream, fontFamily: "inherit", boxSizing: "border-box" }} />
+                  <input id="new-ing-unit" placeholder="g, ml..."
+                    style={{ width: 60, padding: "9px 8px", borderRadius: 8, border: `1px solid ${COLORS.line}`, fontSize: 13, background: COLORS.cream, fontFamily: "inherit", boxSizing: "border-box" }} />
+                  <input id="new-ing-name" placeholder="Nom de l'ingrédient"
+                    style={{ flex: 1, padding: "9px 10px", borderRadius: 8, border: `1px solid ${COLORS.line}`, fontSize: 13, background: COLORS.cream, fontFamily: "inherit", boxSizing: "border-box" }} />
+                  <button onClick={() => {
+                    const qtyEl = document.getElementById("new-ing-qty");
+                    const unitEl = document.getElementById("new-ing-unit");
+                    const nameEl = document.getElementById("new-ing-name");
+                    const name = nameEl.value.trim();
+                    if (!name) return;
+                    const newIng = { qty: parseFloat(qtyEl.value) || 1, unit: unitEl.value.trim(), name };
+                    setAdjustingRecipe(prev => ({ ...prev, ingredients: [...prev.ingredients, newIng] }));
+                    qtyEl.value = "1"; unitEl.value = ""; nameEl.value = "";
+                  }} style={{
+                    padding: "9px 14px", borderRadius: 8, border: "none", background: COLORS.terracotta,
+                    color: "#fff", fontWeight: 600, fontSize: 14, cursor: "pointer", flexShrink: 0,
+                  }}>+</button>
+                </div>
+              </div>
+
+              <button onClick={async () => {
+                setRecipes(prev => prev.map(r => r.id === adjustingRecipe.id ? adjustingRecipe : r));
+                setDetailRecipe(adjustingRecipe);
+                setSelected(prev => prev.map(r => r.id === adjustingRecipe.id ? adjustingRecipe : r));
+                const toSave = adjustingRecipe;
+                setAdjustingRecipe(null);
+                try {
+                  await db.update("recipes", toSave.id, { ingredients: toSave.ingredients });
+                } catch(e) { console.error("Update error:", e); }
+              }} style={{
+                width: "100%", marginTop: 20, padding: 14, borderRadius: 10, border: "none",
+                background: COLORS.sage, color: "#fff", fontWeight: 500, fontSize: 15, cursor: "pointer",
+              }}>Enregistrer pour la famille</button>
+            </div>
+          </div>
+        )}
+
         {/* AMBIGUOUS POULTRY MODAL */}
         {ambiguousPoultry && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(43,38,34,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
@@ -2005,6 +2213,12 @@ export default function BatchCooking() {
                 }}>
                   {selected.find(r => r.id === detailRecipe.id) ? "Retirer du batch" : "Ajouter au batch"}
                 </button>
+
+                {/* Adjust quantities button */}
+                <button onClick={() => { setAdjustingRecipe(JSON.parse(JSON.stringify(detailRecipe))); }} style={{
+                  width: "100%", marginTop: 10, padding: 12, borderRadius: 10, border: `1px solid ${COLORS.sage}`,
+                  background: "transparent", color: COLORS.sage, fontWeight: 500, fontSize: 14, cursor: "pointer",
+                }}>⚖️ Ajuster les quantités pour la famille</button>
 
                 {/* Edit and delete buttons */}
                 <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
@@ -2487,6 +2701,32 @@ export default function BatchCooking() {
                       </div>
                       <span style={{ color: COLORS.inkMuted, fontSize: 12 }}>{expandedStep === i ? "−" : "+"}</span>
                     </div>
+                    {expandedStep === i && step.miseEnPlace && (
+                      <div style={{ padding: "4px 18px 16px 58px" }}>
+                        <div style={{ fontSize: 12, color: COLORS.inkMuted, marginBottom: 12, fontStyle: "italic" }}>
+                          Sors viandes et légumes du frigo. Les épices et huiles restent dans le placard.
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          {step.miseEnPlace.map((item) => {
+                            const checked = !!mepChecked[item.key];
+                            return (
+                              <div key={item.key} onClick={(e) => { e.stopPropagation(); setMepChecked(prev => ({ ...prev, [item.key]: !prev[item.key] })); }}
+                                style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 0", cursor: "pointer",
+                                  borderBottom: `1px solid ${COLORS.line}`, opacity: checked ? 0.4 : 1 }}>
+                                <span style={{
+                                  width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                                  border: `1.5px solid ${checked ? COLORS.sage : COLORS.line}`,
+                                  background: checked ? COLORS.sage : "transparent",
+                                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: "#fff",
+                                }}>{checked ? "✓" : ""}</span>
+                                <span style={{ fontSize: 14, color: COLORS.inkSoft, textDecoration: checked ? "line-through" : "none", flex: 1 }}>{item.name}</span>
+                                {item.qty && <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.terracotta, textDecoration: checked ? "line-through" : "none" }}>{item.qty}</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                     {expandedStep === i && step.prepItems && (
                       <div style={{ padding: "4px 18px 16px 58px" }}>
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
@@ -2526,29 +2766,65 @@ export default function BatchCooking() {
                         </table>
                       </div>
                     )}
-                    {expandedStep === i && step.assemblyItems && (
-                      <div style={{ padding: "4px 18px 16px 58px", display: "flex", flexDirection: "column", gap: 16 }}>
-                        {step.assemblyItems.map((r, j) => (
-                          <div key={j}>
-                            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
-                              <span style={{ fontWeight: 600, fontSize: 13, color: COLORS.terracotta, fontFamily: "Georgia, serif" }}>{r.recipeName}</span>
-                              <span style={{ fontSize: 11, color: COLORS.inkMuted }}>{r.cookTime} min{r.temp ? ` à ${r.temp}°C` : ""}</span>
-                            </div>
-                            {r.marinadeNote && (
-                              <div style={{ fontSize: 12, color: "#7a5a1f", background: COLORS.goldSoft, borderRadius: 8, padding: "7px 10px", marginBottom: 8, lineHeight: 1.5 }}>
-                                {r.marinadeNote}
+                    {expandedStep === i && step.horsFeuItems && (
+                      <div style={{ padding: "4px 18px 16px 58px" }}>
+                        <div style={{ fontSize: 12, color: COLORS.inkMuted, marginBottom: 14, fontStyle: "italic" }}>
+                          À faire à froid avant d'allumer les feux — en parallèle.
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(step.horsFeuItems.length, 2)}, 1fr)`, gap: 20 }}>
+                          {step.horsFeuItems.map((r, j) => (
+                            <div key={j} style={{ borderTop: `2px solid ${COLORS.sage}`, paddingTop: 8 }}>
+                              <div onClick={(e) => { e.stopPropagation(); const full = recipes.find(rr => rr.name === r.recipeName); if (full) setDetailRecipe(full); }}
+                                style={{ fontWeight: 600, fontSize: 13, color: COLORS.sage, fontFamily: "Georgia, serif", marginBottom: 10, cursor: "pointer", textDecoration: "underline", textDecorationColor: COLORS.line, textUnderlineOffset: 2 }}>
+                                {r.recipeName}
                               </div>
-                            )}
-                            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                              {r.assembly.map((step2, k) => (
-                                <div key={k} style={{ display: "flex", gap: 8, fontSize: 13, color: COLORS.inkSoft, lineHeight: 1.5 }}>
-                                  <span style={{ color: COLORS.inkMuted, fontSize: 11, flexShrink: 0 }}>{k + 1}.</span>
-                                  <span>{step2}</span>
+                              {r.marinadeNote && (
+                                <div style={{ fontSize: 12, color: "#7a5a1f", background: COLORS.goldSoft, borderRadius: 8, padding: "7px 10px", marginBottom: 8, lineHeight: 1.5 }}>
+                                  {r.marinadeNote}
                                 </div>
-                              ))}
+                              )}
+                              <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                                {r.horsFeu.map((s, k) => (
+                                  <div key={k} style={{ display: "flex", gap: 7, fontSize: 12.5, color: COLORS.inkSoft, lineHeight: 1.5 }}>
+                                    <span style={{ color: COLORS.sage, flexShrink: 0, fontSize: 11 }}>•</span>
+                                    <span>{s}</span>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {expandedStep === i && step.cuissonItems && (
+                      <div style={{ padding: "4px 18px 16px 58px" }}>
+                        <div style={{ fontSize: 12, color: COLORS.inkMuted, marginBottom: 14, fontStyle: "italic" }}>
+                          Lance tout en parallèle — une colonne par plat.
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.min(step.cuissonItems.length, 2)}, 1fr)`, gap: 20 }}>
+                          {step.cuissonItems.map((r, j) => {
+                            const isFour = r.cookMethod === "four";
+                            return (
+                              <div key={j} style={{ borderTop: `2px solid ${isFour ? COLORS.gold : COLORS.terracotta}`, paddingTop: 8 }}>
+                                <div onClick={(e) => { e.stopPropagation(); const full = recipes.find(rr => rr.name === r.recipeName); if (full) setDetailRecipe(full); }}
+                                  style={{ fontWeight: 600, fontSize: 13, color: isFour ? "#7a5a1f" : COLORS.terracottaDark, fontFamily: "Georgia, serif", marginBottom: 1, cursor: "pointer", textDecoration: "underline", textDecorationColor: COLORS.line, textUnderlineOffset: 2 }}>
+                                  {r.recipeName}
+                                </div>
+                                <div style={{ fontSize: 10.5, color: COLORS.inkMuted, marginBottom: 10 }}>
+                                  {isFour ? `♨ four ${r.temp}°C` : "🔥 feu"} · {r.cookTime} min
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                                  {r.cuisson.map((s, k) => (
+                                    <div key={k} style={{ display: "flex", gap: 7, fontSize: 12.5, color: COLORS.inkSoft, lineHeight: 1.5 }}>
+                                      <span style={{ color: isFour ? COLORS.gold : COLORS.terracotta, flexShrink: 0, fontSize: 11 }}>•</span>
+                                      <span>{s}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                     {expandedStep === i && step.detail && (
