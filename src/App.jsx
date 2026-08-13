@@ -1898,6 +1898,7 @@ export default function BatchCooking() {
   const [adjustingRecipe, setAdjustingRecipe] = useState(null); // recipe whose quantities are being tuned
   const [confirmDelete, setConfirmDelete] = useState(null); // { type: "recipe"|"list", item }
   const [copyFeedback, setCopyFeedback] = useState(false);
+  const [bringStatus, setBringStatus] = useState("idle"); // idle | sending | done | error
   // weekStatus tracks where the person is in the real-life journey:
   // "planning" -> choosing recipes, "shopping" -> list generated, waiting to shop,
   // "cooking" -> groceries done, ready to batch cook, "idle" -> nothing active
@@ -3114,20 +3115,33 @@ export default function BatchCooking() {
                     });
                   });
                   manualItems.filter(m => !m.done).forEach(m => lines.push(m.name));
-                  // Build a link to our recipe-page that Bring! can scan
-                  const itemsParam = encodeURIComponent(lines.join("|"));
-                  const url = `${window.location.origin}/api/liste?title=${encodeURIComponent("Liste de courses")}&items=${itemsParam}`;
-                  if (navigator.share) {
-                    try { await navigator.share({ title: "Liste de courses", url }); } catch(e) {}
-                  } else {
-                    navigator.clipboard.writeText(url);
-                    setCopyFeedback(true);
-                    setTimeout(() => setCopyFeedback(false), 2000);
+                  if (lines.length === 0) return;
+                  setBringStatus("sending");
+                  try {
+                    const resp = await fetch("/api/bring", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ items: lines }),
+                    });
+                    const data = await resp.json();
+                    if (data.success) {
+                      setBringStatus("done");
+                      setTimeout(() => setBringStatus("idle"), 3000);
+                    } else {
+                      setBringStatus("error");
+                      setTimeout(() => setBringStatus("idle"), 4000);
+                    }
+                  } catch (e) {
+                    setBringStatus("error");
+                    setTimeout(() => setBringStatus("idle"), 4000);
                   }
                 }} style={{
                   flex: 1, padding: 13, borderRadius: 10, border: "none",
-                  background: COLORS.terracotta, color: "#fff", fontWeight: 500, fontSize: 14, cursor: "pointer",
-                }}>📤 Partager vers Bring!</button>
+                  background: bringStatus === "done" ? COLORS.sage : bringStatus === "error" ? "#c0392b" : COLORS.terracotta,
+                  color: "#fff", fontWeight: 500, fontSize: 14, cursor: "pointer",
+                }}>
+                  {bringStatus === "sending" ? "Envoi..." : bringStatus === "done" ? "✓ Ajouté à Bring!" : bringStatus === "error" ? "Erreur — réessaie" : "🛒 Envoyer vers Bring!"}
+                </button>
               </div>
 
               {/* Manual items section */}
