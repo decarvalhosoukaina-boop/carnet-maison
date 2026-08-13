@@ -1920,6 +1920,26 @@ export default function BatchCooking() {
   })();
 
   // Load data from Supabase on mount
+  // Inject the elegant Fraunces display font (for the "carnet" feel)
+  useEffect(() => {
+    if (!document.getElementById("fraunces-font")) {
+      const link = document.createElement("link");
+      link.id = "fraunces-font";
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap";
+      document.head.appendChild(link);
+    }
+    if (!document.getElementById("carnet-refinements")) {
+      const style = document.createElement("style");
+      style.id = "carnet-refinements";
+      style.textContent = `
+        h1, h2, h3 { letter-spacing: -0.01em; }
+        body { -webkit-font-smoothing: antialiased; }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -2104,7 +2124,7 @@ export default function BatchCooking() {
   const labelStyle = { fontSize: 13, fontWeight: 500, color: COLORS.inkSoft, display: "block", marginBottom: 6 };
 
   return (
-    <div style={{ fontFamily: "'Georgia', 'Iowan Old Style', serif", background: COLORS.cream, minHeight: "100vh", color: COLORS.ink }}>
+    <div style={{ fontFamily: "'Fraunces', 'Georgia', serif", background: COLORS.cream, minHeight: "100vh", color: COLORS.ink }}>
       <div style={{ fontFamily: "'Helvetica Neue', Arial, sans-serif" }}>
 
         {/* RESTES SUGGESTION MODAL */}
@@ -2115,14 +2135,14 @@ export default function BatchCooking() {
               background: COLORS.card, borderRadius: 16, padding: 28, maxWidth: 380, width: "100%", border: `1px solid ${COLORS.line}`,
             }}>
               <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: COLORS.gold, marginBottom: 6 }}>Astuce restes</div>
-              <h2 style={{ margin: "0 0 8px", fontSize: 19, fontWeight: 500, fontFamily: "Georgia, serif" }}>Tu vas avoir des restes 🍱</h2>
+              <h2 style={{ margin: "0 0 8px", fontSize: 19, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Tu vas avoir des restes 🍱</h2>
               <p style={{ fontSize: 13, color: COLORS.inkMuted, marginBottom: 18, lineHeight: 1.5 }}>
                 Cette recette va te laisser des restes — voici ce que tu peux en faire :
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
                 {restesSuggestion.map((s, i) => (
                   <div key={i} style={{ background: COLORS.goldSoft, borderRadius: 12, padding: "12px 14px", border: `1px solid #e8d9a0` }}>
-                    <div style={{ fontWeight: 600, fontSize: 14, fontFamily: "Georgia, serif", marginBottom: 2 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14, fontFamily: "'Fraunces', Georgia, serif", marginBottom: 2 }}>
                       {s.recipe.name}
                     </div>
                     <div style={{ fontSize: 12, color: "#7a5a1f" }}>
@@ -2160,7 +2180,7 @@ export default function BatchCooking() {
               border: `1px solid ${COLORS.line}`,
             }}>
               <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: COLORS.terracotta, marginBottom: 6 }}>Suggestion</div>
-              <h2 style={{ margin: "0 0 4px", fontSize: 21, fontWeight: 500, fontFamily: "Georgia, serif" }}>Sauce blanche</h2>
+              <h2 style={{ margin: "0 0 4px", fontSize: 21, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Sauce blanche</h2>
               <p style={{ fontSize: 13, color: COLORS.inkMuted, marginBottom: 18 }}>À préparer pendant que le poulet repose</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 18 }}>
                 {sauceBlancheRecipe.ingredients.map((ing, i) => (
@@ -2195,7 +2215,7 @@ export default function BatchCooking() {
               maxHeight: "80vh", overflowY: "auto", padding: "26px 22px 32px", border: `1px solid ${COLORS.line}`, borderBottom: "none",
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
-                <h2 style={{ margin: 0, fontSize: 21, fontWeight: 500, fontFamily: "Georgia, serif" }}>Historique des semaines</h2>
+                <h2 style={{ margin: 0, fontSize: 21, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Historique des semaines</h2>
                 <button onClick={() => setShowHistoryModal(false)} style={{ background: "transparent", border: `1px solid ${COLORS.line}`, borderRadius: "50%", width: 32, height: 32, fontSize: 16, cursor: "pointer", color: COLORS.inkSoft }}>×</button>
               </div>
               {weekHistory.length === 0 ? (
@@ -2234,7 +2254,7 @@ export default function BatchCooking() {
                 maxHeight: "85vh", overflowY: "auto", padding: "26px 22px 32px", border: `1px solid ${COLORS.line}`, borderBottom: "none",
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                  <h2 style={{ margin: 0, fontSize: 21, fontWeight: 500, fontFamily: "Georgia, serif" }}>Semaine enregistrée</h2>
+                  <h2 style={{ margin: 0, fontSize: 21, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Semaine enregistrée</h2>
                   <button onClick={() => setShowSuggestion(false)} style={{ background: "transparent", border: `1px solid ${COLORS.line}`, borderRadius: "50%", width: 32, height: 32, fontSize: 16, cursor: "pointer", color: COLORS.inkSoft }}>×</button>
                 </div>
                 <p style={{ fontSize: 14, color: COLORS.inkMuted, marginBottom: 22 }}>Pour varier, voici des idées pour la semaine prochaine</p>
@@ -2290,7 +2310,7 @@ export default function BatchCooking() {
         {confirmDelete && (
           <div style={{ position: "fixed", inset: 0, background: "rgba(43,38,34,0.5)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
             <div style={{ background: COLORS.card, borderRadius: 16, padding: 28, maxWidth: 360, width: "100%", border: `1px solid ${COLORS.line}` }}>
-              <h2 style={{ margin: "0 0 8px", fontSize: 19, fontWeight: 500, fontFamily: "Georgia, serif" }}>
+              <h2 style={{ margin: "0 0 8px", fontSize: 19, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>
                 {confirmDelete.type === "recipe" ? "Supprimer la recette ?" : confirmDelete.type === "week" ? "Supprimer ce menu ?" : "Supprimer la liste ?"}
               </h2>
               <p style={{ fontSize: 14, color: COLORS.inkMuted, marginBottom: 24, lineHeight: 1.5 }}>
@@ -2336,7 +2356,7 @@ export default function BatchCooking() {
           <div style={{ position: "fixed", inset: 0, background: "rgba(43,38,34,0.6)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
             <div style={{ background: COLORS.cream, borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 600, maxHeight: "90vh", overflowY: "auto", padding: "24px 22px 32px", border: `1px solid ${COLORS.line}`, borderBottom: "none" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500, fontFamily: "Georgia, serif" }}>Modifier la recette</h2>
+                <h2 style={{ margin: 0, fontSize: 20, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Modifier la recette</h2>
                 <button onClick={() => setEditingRecipe(null)} style={{ background: "transparent", border: `1px solid ${COLORS.line}`, borderRadius: "50%", width: 32, height: 32, fontSize: 16, cursor: "pointer", color: COLORS.inkSoft }}>×</button>
               </div>
 
@@ -2410,7 +2430,7 @@ export default function BatchCooking() {
             <div style={{ background: COLORS.cream, borderRadius: "20px 20px 0 0", padding: 24, maxWidth: 600, width: "100%", maxHeight: "85vh", overflowY: "auto" }}
               onClick={e => e.stopPropagation()}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
-                <h2 style={{ margin: 0, fontSize: 19, fontWeight: 500, fontFamily: "Georgia, serif" }}>Ajuster les quantités</h2>
+                <h2 style={{ margin: 0, fontSize: 19, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Ajuster les quantités</h2>
                 <button onClick={() => setAdjustingRecipe(null)} style={{ background: "transparent", border: `1px solid ${COLORS.line}`, borderRadius: "50%", width: 32, height: 32, fontSize: 16, cursor: "pointer", color: COLORS.inkSoft, flexShrink: 0 }}>×</button>
               </div>
               <p style={{ fontSize: 13, color: COLORS.inkMuted, margin: "0 0 20px" }}>{adjustingRecipe.name} — enregistré pour toute la famille</p>
@@ -2500,7 +2520,7 @@ export default function BatchCooking() {
               background: COLORS.card, borderRadius: 16, padding: 28, maxWidth: 380, width: "100%", border: `1px solid ${COLORS.line}`,
             }}>
               <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: COLORS.terracotta, marginBottom: 6 }}>Précision nécessaire</div>
-              <h2 style={{ margin: "0 0 8px", fontSize: 19, fontWeight: 500, fontFamily: "Georgia, serif" }}>Quel morceau de poulet ?</h2>
+              <h2 style={{ margin: "0 0 8px", fontSize: 19, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Quel morceau de poulet ?</h2>
               <p style={{ fontSize: 13, color: COLORS.inkMuted, marginBottom: 20, lineHeight: 1.5 }}>
                 L'ingrédient "{ambiguousPoultry.ingredients[ambiguousPoultry.index].name}" ne précise pas le morceau. Pour bien organiser la liste de courses, choisis :
               </p>
@@ -2543,14 +2563,14 @@ export default function BatchCooking() {
               maxHeight: "85vh", overflowY: "auto", padding: "26px 22px 32px", border: `1px solid ${COLORS.line}`, borderBottom: "none",
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                <h2 style={{ margin: 0, fontSize: 21, fontWeight: 500, fontFamily: "Georgia, serif" }}>{viewingShoppingList.label}</h2>
+                <h2 style={{ margin: 0, fontSize: 21, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>{viewingShoppingList.label}</h2>
                 <button onClick={() => setViewingShoppingList(null)} style={{ background: "transparent", border: `1px solid ${COLORS.line}`, borderRadius: "50%", width: 32, height: 32, fontSize: 16, cursor: "pointer", color: COLORS.inkSoft }}>×</button>
               </div>
               <p style={{ fontSize: 13, color: COLORS.inkMuted, marginBottom: 22 }}>Pour {viewingShoppingList.recipes.join(", ")}</p>
 
               {Object.entries(viewingShoppingList.list).map(([category, items]) => (
                 <div key={category} style={{ marginBottom: 20 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, fontFamily: "Georgia, serif", color: "#4a5640" }}>{category}</div>
+                  <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, fontFamily: "'Fraunces', Georgia, serif", color: "#4a5640" }}>{category}</div>
                   <div style={{ background: COLORS.card, borderRadius: 12, border: `1px solid ${COLORS.line}`, overflow: "hidden" }}>
                     {items.map((item, i) => (
                       <div key={item.key} style={{
@@ -2590,7 +2610,7 @@ export default function BatchCooking() {
                 maxHeight: "85vh", overflowY: "auto", padding: "26px 22px 32px", border: `1px solid ${COLORS.line}`, borderBottom: "none",
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                  <h2 style={{ margin: 0, fontSize: 21, fontWeight: 500, fontFamily: "Georgia, serif" }}>Liste finale</h2>
+                  <h2 style={{ margin: 0, fontSize: 21, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Liste finale</h2>
                   <button onClick={() => setShowFinalList(false)} style={{ background: "transparent", border: `1px solid ${COLORS.line}`, borderRadius: "50%", width: 32, height: 32, fontSize: 16, cursor: "pointer", color: COLORS.inkSoft }}>×</button>
                 </div>
                 <p style={{ fontSize: 13, color: COLORS.inkMuted, marginBottom: 22 }}>{totalItems} article{totalItems > 1 ? "s" : ""} à acheter</p>
@@ -2602,7 +2622,7 @@ export default function BatchCooking() {
                 ) : (
                   Object.entries(finalList).map(([category, items]) => (
                     <div key={category} style={{ marginBottom: 20 }}>
-                      <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, fontFamily: "Georgia, serif", color: "#4a5640" }}>{category}</div>
+                      <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, fontFamily: "'Fraunces', Georgia, serif", color: "#4a5640" }}>{category}</div>
                       <div style={{ background: COLORS.card, borderRadius: 12, border: `1px solid ${COLORS.line}`, overflow: "hidden" }}>
                         {items.map((item, i) => (
                           <div key={item.key} style={{
@@ -2640,8 +2660,8 @@ export default function BatchCooking() {
                   <Pill tone="terracotta">{detailRecipe.category}</Pill>
                   <button onClick={() => setDetailRecipe(null)} style={{ background: "transparent", border: `1px solid ${COLORS.line}`, borderRadius: "50%", width: 32, height: 32, fontSize: 16, cursor: "pointer", color: COLORS.inkSoft, flexShrink: 0 }}>×</button>
                 </div>
-                <h2 style={{ margin: "10px 0 4px", fontSize: 24, fontWeight: 500, fontFamily: "Georgia, serif" }}>{detailRecipe.name}</h2>
-                {detailRecipe.subtitle && <p style={{ margin: "0 0 12px", fontSize: 14, color: COLORS.inkMuted, fontFamily: "Georgia, serif", fontStyle: "italic" }}>{detailRecipe.subtitle}</p>}
+                <h2 style={{ margin: "10px 0 4px", fontSize: 24, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>{detailRecipe.name}</h2>
+                {detailRecipe.subtitle && <p style={{ margin: "0 0 12px", fontSize: 14, color: COLORS.inkMuted, fontFamily: "'Fraunces', Georgia, serif", fontStyle: "italic" }}>{detailRecipe.subtitle}</p>}
                 <div style={{ display: "flex", gap: 16, fontSize: 13, color: COLORS.inkSoft, paddingBottom: 18, borderBottom: `1px solid ${COLORS.line}`, fontFamily: "'Helvetica Neue', sans-serif" }}>
                   <span>{detailRecipe.prepTime + detailRecipe.cookTime} min</span>
                   <span>{detailRecipe.cookMethod === "four" ? `Four ${detailRecipe.temp}°C` : "À la poêle"}</span>
@@ -2728,13 +2748,14 @@ export default function BatchCooking() {
         {/* Header */}
         <div style={{ padding: "28px 24px 0", maxWidth: 700, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, fontFamily: "Georgia, serif", color: COLORS.ink, lineHeight: 1.2 }}>Le carnet de la maison</h1>
-            <p style={{ margin: "3px 0 0", fontSize: 13, color: COLORS.inkMuted, fontFamily: "Georgia, serif", fontStyle: "italic" }}>Recettes · Courses · Cuisine</p>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, fontFamily: "'Fraunces', Georgia, serif", color: COLORS.ink, lineHeight: 1.2 }}>Le carnet de la maison</h1>
+            <p style={{ margin: "3px 0 0", fontSize: 13, color: COLORS.inkMuted, fontFamily: "'Fraunces', Georgia, serif", fontStyle: "italic" }}>Recettes · Courses · Cuisine</p>
           </div>
           <div style={{ fontSize: 28 }}>🥘</div>
         </div>
 
-        {/* Tabs — icon cards */}
+        {/* Tabs — icon cards (hidden on home, where big cards handle navigation) */}
+        {view !== "home" && (
         <div style={{ background: COLORS.cream, position: "sticky", top: 0, zIndex: 10, padding: "12px 16px 0", borderBottom: `1px solid ${COLORS.line}` }}>
           <div style={{ display: "flex", gap: 8, maxWidth: 700, margin: "0 auto", justifyContent: "space-between" }}>
             {[
@@ -2777,16 +2798,46 @@ export default function BatchCooking() {
             })}
           </div>
         </div>
+        )}
 
         <div style={{ maxWidth: 700, margin: "0 auto", padding: "28px 24px 80px", fontFamily: "'Helvetica Neue', sans-serif" }}>
 
           {/* HOME VIEW — entry point showing where the person is in the journey */}
           {view === "home" && (
             <div>
+              {/* Big navigation cards (like the demo) */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 28 }}>
+                {[
+                  { key: "select", label: "Recettes", icon: "📖" },
+                  { key: "shopping", label: "Courses", icon: "🛒" },
+                  { key: "plan", label: "Cuisine", icon: "👨‍🍳" },
+                  { key: "semaine", label: "Semaine", icon: "📅" },
+                  { key: "history", label: "Archives", icon: "🕐" },
+                  { key: "add", label: "Ajouter", icon: "➕" },
+                ].map((c) => (
+                  <button key={c.key} onClick={() => {
+                    if (c.key === "plan") { setBatchPlan(generateBatchPlan(selected, recipeServings)); setView("plan"); return; }
+                    if (c.key === "shopping") { setView(weekStatus === "planning" ? "batch" : "shopping"); return; }
+                    setView(c.key);
+                  }} style={{
+                    background: COLORS.card, border: `1px solid ${COLORS.line}`, borderRadius: 18,
+                    padding: "22px 8px", cursor: "pointer", display: "flex", flexDirection: "column",
+                    alignItems: "center", gap: 8, boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
+                    transition: "transform 0.15s ease",
+                  }}
+                    onMouseDown={e => e.currentTarget.style.transform = "scale(0.95)"}
+                    onMouseUp={e => e.currentTarget.style.transform = "scale(1)"}
+                    onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
+                    <span style={{ fontSize: 30 }}>{c.icon}</span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: COLORS.inkSoft, fontFamily: "'Helvetica Neue', sans-serif" }}>{c.label}</span>
+                  </button>
+                ))}
+              </div>
+
               {weekStatus === "idle" && (
                 <div style={{ textAlign: "center", padding: "40px 20px" }}>
                   <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: COLORS.terracotta, marginBottom: 10 }}>Prête à commencer ?</div>
-                  <h2 style={{ margin: "0 0 10px", fontSize: 24, fontWeight: 500, fontFamily: "Georgia, serif" }}>Aucune semaine en cours</h2>
+                  <h2 style={{ margin: "0 0 10px", fontSize: 24, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Aucune semaine en cours</h2>
                   <p style={{ fontSize: 14, color: COLORS.inkMuted, marginBottom: 28, maxWidth: 420, marginLeft: "auto", marginRight: "auto", lineHeight: 1.6 }}>
                     Choisis tes recettes pour la semaine, génère la liste de courses, puis reviens quand tu es prête à cuisiner — aucune urgence à tout faire d'un coup.
                   </p>
@@ -2800,14 +2851,14 @@ export default function BatchCooking() {
               {weekStatus === "planning" && (
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: COLORS.terracotta, marginBottom: 10 }}>Étape 1 sur 3 — planification</div>
-                  <h2 style={{ margin: "0 0 10px", fontSize: 24, fontWeight: 500, fontFamily: "Georgia, serif" }}>Semaine en cours de préparation</h2>
+                  <h2 style={{ margin: "0 0 10px", fontSize: 24, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Semaine en cours de préparation</h2>
                   <p style={{ fontSize: 14, color: COLORS.inkMuted, marginBottom: 24, lineHeight: 1.6 }}>
                     {selected.length} plat{selected.length > 1 ? "s" : ""} sélectionné{selected.length > 1 ? "s" : ""}. Ajoute d'autres recettes ou passe à la liste de courses quand tu es prête.
                   </p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
                     {selected.map(r => (
                       <div key={r.id} style={{ background: COLORS.card, borderRadius: 10, padding: "12px 16px", border: `1px solid ${COLORS.line}`, display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                        <span style={{ fontFamily: "Georgia, serif", fontWeight: 600 }}>{r.name}</span>
+                        <span style={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 600 }}>{r.name}</span>
                         <span style={{ color: COLORS.inkMuted }}>{recipeServings[r.id] || r.servings} pers.</span>
                       </div>
                     ))}
@@ -2826,7 +2877,7 @@ export default function BatchCooking() {
               {weekStatus === "shopping" && activeShoppingList && (
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: COLORS.terracotta, marginBottom: 10 }}>Étape 2 sur 3 — courses</div>
-                  <h2 style={{ margin: "0 0 10px", fontSize: 24, fontWeight: 500, fontFamily: "Georgia, serif" }}>Liste de courses prête</h2>
+                  <h2 style={{ margin: "0 0 10px", fontSize: 24, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Liste de courses prête</h2>
                   <p style={{ fontSize: 14, color: COLORS.inkMuted, marginBottom: 24, lineHeight: 1.6 }}>
                     Pour {activeShoppingList.recipes.map(r => r.name).join(", ")}. Reviens ici une fois les courses faites.
                   </p>
@@ -2844,14 +2895,14 @@ export default function BatchCooking() {
               {weekStatus === "cooking" && (
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: COLORS.terracotta, marginBottom: 10 }}>Étape 3 sur 3 — cuisine</div>
-                  <h2 style={{ margin: "0 0 10px", fontSize: 24, fontWeight: 500, fontFamily: "Georgia, serif" }}>Prête à cuisiner</h2>
+                  <h2 style={{ margin: "0 0 10px", fontSize: 24, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Prête à cuisiner</h2>
                   <p style={{ fontSize: 14, color: COLORS.inkMuted, marginBottom: 24, lineHeight: 1.6 }}>
                     Les courses sont faites. Lance le plan de cuisson pour {selected.length} plat{selected.length > 1 ? "s" : ""} en parallèle.
                   </p>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
                     {selected.map(r => (
                       <div key={r.id} style={{ background: COLORS.card, borderRadius: 10, padding: "12px 16px", border: `1px solid ${COLORS.line}`, display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                        <span style={{ fontFamily: "Georgia, serif", fontWeight: 600 }}>{r.name}</span>
+                        <span style={{ fontFamily: "'Fraunces', Georgia, serif", fontWeight: 600 }}>{r.name}</span>
                         <span style={{ color: COLORS.inkMuted }}>{recipeServings[r.id] || r.servings} pers.</span>
                       </div>
                     ))}
@@ -2868,6 +2919,31 @@ export default function BatchCooking() {
                   width: "100%", padding: 13, border: "none", background: "transparent",
                   color: COLORS.inkMuted, fontWeight: 500, fontSize: 13, cursor: "pointer", marginTop: 24,
                 }}>Voir l'historique ({weekHistory.length} semaine{weekHistory.length > 1 ? "s" : ""})</button>
+              )}
+
+              {/* This week's selected dishes */}
+              {selected.length > 0 && (
+                <div style={{ marginTop: 28 }}>
+                  <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 17, fontWeight: 600, marginBottom: 12 }}>Cette semaine</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+                    {selected.map(r => {
+                      const cat = (r.category || "").toLowerCase();
+                      const ico = cat.includes("poulet") ? "🍗" : cat.includes("boeuf") || cat.includes("bœuf") ? "🥩" : cat.includes("porc") ? "🐷" : cat.includes("rapide") ? "⚡" : cat.includes("légum") ? "🥬" : "🍽️";
+                      return (
+                        <div key={r.id} onClick={() => setDetailRecipe(r)} style={{
+                          background: COLORS.card, borderRadius: 16, padding: 14, border: `1px solid ${COLORS.line}`,
+                          display: "flex", alignItems: "center", gap: 12, cursor: "pointer", boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
+                        }}>
+                          <span style={{ fontSize: 24 }}>{ico}</span>
+                          <div>
+                            <div style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: 15, fontWeight: 500 }}>{r.name}</div>
+                            <div style={{ fontSize: 11, color: COLORS.inkMuted }}>{r.prepTime + r.cookTime} min</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
             </div>
           )}
@@ -2933,9 +3009,9 @@ export default function BatchCooking() {
                     }}>
                       <div onClick={() => setDetailRecipe(recipe) || setDetailServings(recipe.servings)} style={{ flex: 1, cursor: "pointer", minWidth: 0 }}>
                         <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 3 }}>
-                          <span style={{ fontWeight: 600, fontSize: 16, fontFamily: "Georgia, serif" }}>{recipe.name}</span>
+                          <span style={{ fontWeight: 600, fontSize: 16, fontFamily: "'Fraunces', Georgia, serif" }}>{recipe.name}</span>
                         </div>
-                        {recipe.subtitle && <div style={{ fontSize: 13, color: COLORS.inkMuted, fontStyle: "italic", fontFamily: "Georgia, serif", marginBottom: 6 }}>{recipe.subtitle}</div>}
+                        {recipe.subtitle && <div style={{ fontSize: 13, color: COLORS.inkMuted, fontStyle: "italic", fontFamily: "'Fraunces', Georgia, serif", marginBottom: 6 }}>{recipe.subtitle}</div>}
                         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                           {recipe.resteTags
                             ? recipe.resteTags.map(tag => <Pill key={tag} tone="gold">Restes de {tag}</Pill>)
@@ -2963,7 +3039,7 @@ export default function BatchCooking() {
             <div>
               {selected.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "60px 20px" }}>
-                  <div style={{ fontSize: 17, fontWeight: 500, marginBottom: 8, fontFamily: "Georgia, serif" }}>Aucun plat sélectionné</div>
+                  <div style={{ fontSize: 17, fontWeight: 500, marginBottom: 8, fontFamily: "'Fraunces', Georgia, serif" }}>Aucun plat sélectionné</div>
                   <div style={{ fontSize: 14, color: COLORS.inkMuted, marginBottom: 24 }}>Choisis des recettes dans l'onglet Recettes</div>
                   <button onClick={() => setView("select")} style={{
                     padding: "12px 22px", borderRadius: 10, border: "none",
@@ -2976,10 +3052,10 @@ export default function BatchCooking() {
                     {selected.map(recipe => {
                       const srv = recipeServings[recipe.id] || recipe.servings;
                       return (
-                        <div key={recipe.id} style={{ background: COLORS.card, borderRadius: 14, padding: 18, border: `1px solid ${COLORS.line}` }}>
+                        <div key={recipe.id} style={{ background: COLORS.card, borderRadius: 16, padding: 18, border: `1px solid ${COLORS.line}`, boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
                             <div style={{ flex: 1 }}>
-                              <div style={{ fontWeight: 600, fontSize: 15, fontFamily: "Georgia, serif" }}>{recipe.name}</div>
+                              <div style={{ fontWeight: 600, fontSize: 15, fontFamily: "'Fraunces', Georgia, serif" }}>{recipe.name}</div>
                               <div style={{ fontSize: 12, color: COLORS.inkMuted }}>{recipe.prepTime + recipe.cookTime} min</div>
                             </div>
                             <button onClick={() => toggleSelect(recipe)} style={{
@@ -3056,7 +3132,7 @@ export default function BatchCooking() {
             <div>
               <div style={{ marginBottom: 24 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: COLORS.terracotta, marginBottom: 6 }}>Étape 2 sur 3</div>
-                <h2 style={{ margin: "0 0 6px", fontSize: 22, fontWeight: 500, fontFamily: "Georgia, serif" }}>Liste de courses</h2>
+                <h2 style={{ margin: "0 0 6px", fontSize: 22, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Liste de courses</h2>
                 <p style={{ fontSize: 14, color: COLORS.inkMuted, margin: 0 }}>
                   {liveRecipes.length > 0 ? `Pour ${liveRecipes.map(r => r.name).join(", ")}` : "Aucune recette sélectionnée"}
                 </p>
@@ -3069,7 +3145,7 @@ export default function BatchCooking() {
                 </div>
                 {Object.entries(liveList).map(([category, items], catIdx) => (
                   <div key={category} style={{ marginTop: 18, paddingTop: catIdx === 0 ? 14 : 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 9, fontFamily: "Georgia, serif", color: "#4a5640" }}>{category}</div>
+                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 9, fontFamily: "'Fraunces', Georgia, serif", color: "#4a5640" }}>{category}</div>
                     <div style={{ display: "flex", flexDirection: "column" }}>
                       {items.map((item, i) => {
                         const owned = !!ownedIngredients[item.key];
@@ -3246,7 +3322,7 @@ export default function BatchCooking() {
 
               <div style={{ marginBottom: 24 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: COLORS.terracotta, marginBottom: 6 }}>Étape 3 sur 3 — session de cuisine</div>
-                <div style={{ fontSize: 26, fontWeight: 500, fontFamily: "Georgia, serif" }}>{totalTime} minutes au total</div>
+                <div style={{ fontSize: 26, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>{totalTime} minutes au total</div>
                 <div style={{ fontSize: 14, color: COLORS.inkMuted, marginTop: 4 }}>{selected.length} plat{selected.length > 1 ? "s" : ""} en parallèle</div>
               </div>
 
@@ -3310,7 +3386,7 @@ export default function BatchCooking() {
                                     <td rowSpan={item.actionLines.length} style={{
                                       verticalAlign: "top", paddingTop: 10, paddingRight: 10, paddingBottom: 10,
                                       borderBottom: `1px solid ${COLORS.line}`, fontWeight: 600,
-                                      fontFamily: "Georgia, serif", color: COLORS.terracotta,
+                                      fontFamily: "'Fraunces', Georgia, serif", color: COLORS.terracotta,
                                     }}>{item.ingredient}</td>
                                   )}
                                   <td style={{ verticalAlign: "top", padding: "10px 10px 10px 0", borderBottom: `1px solid ${COLORS.line}`, fontWeight: 600, color: COLORS.ink, whiteSpace: "nowrap" }}>
@@ -3340,7 +3416,7 @@ export default function BatchCooking() {
                           {step.horsFeuItems.map((r, j) => (
                             <div key={j} style={{ borderTop: `2px solid ${COLORS.sage}`, paddingTop: 8 }}>
                               <div onClick={(e) => { e.stopPropagation(); const full = recipes.find(rr => rr.name === r.recipeName); if (full) setDetailRecipe(full); }}
-                                style={{ fontWeight: 600, fontSize: 13, color: COLORS.sage, fontFamily: "Georgia, serif", marginBottom: 10, cursor: "pointer", textDecoration: "underline", textDecorationColor: COLORS.line, textUnderlineOffset: 2 }}>
+                                style={{ fontWeight: 600, fontSize: 13, color: COLORS.sage, fontFamily: "'Fraunces', Georgia, serif", marginBottom: 10, cursor: "pointer", textDecoration: "underline", textDecorationColor: COLORS.line, textUnderlineOffset: 2 }}>
                                 {r.recipeName}
                               </div>
                               {r.marinadeNote && (
@@ -3372,7 +3448,7 @@ export default function BatchCooking() {
                             return (
                               <div key={j} style={{ borderTop: `2px solid ${isFour ? COLORS.gold : COLORS.terracotta}`, paddingTop: 8 }}>
                                 <div onClick={(e) => { e.stopPropagation(); const full = recipes.find(rr => rr.name === r.recipeName); if (full) setDetailRecipe(full); }}
-                                  style={{ fontWeight: 600, fontSize: 13, color: isFour ? "#7a5a1f" : COLORS.terracottaDark, fontFamily: "Georgia, serif", marginBottom: 1, cursor: "pointer", textDecoration: "underline", textDecorationColor: COLORS.line, textUnderlineOffset: 2 }}>
+                                  style={{ fontWeight: 600, fontSize: 13, color: isFour ? "#7a5a1f" : COLORS.terracottaDark, fontFamily: "'Fraunces', Georgia, serif", marginBottom: 1, cursor: "pointer", textDecoration: "underline", textDecorationColor: COLORS.line, textUnderlineOffset: 2 }}>
                                   {r.recipeName}
                                 </div>
                                 <div style={{ fontSize: 10.5, color: COLORS.inkMuted, marginBottom: 10 }}>
@@ -3442,7 +3518,7 @@ export default function BatchCooking() {
           {view === "semaine" && (
             <div>
               <div style={{ marginBottom: 20 }}>
-                <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 500, fontFamily: "Georgia, serif" }}>Ma semaine</h2>
+                <h2 style={{ margin: "0 0 4px", fontSize: 20, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Ma semaine</h2>
                 <p style={{ fontSize: 13, color: COLORS.inkMuted, margin: 0 }}>Appuie sur un jour pour choisir le plat</p>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 20 }}>
@@ -3489,7 +3565,7 @@ export default function BatchCooking() {
                               style={{ padding: "13px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", borderBottom: "1px solid " + COLORS.line,
                                 background: weekPlan[planPickingDay] && weekPlan[planPickingDay].id === r.id ? COLORS.terracottaSoft : "transparent" }}>
                               <span style={{ fontSize: 22 }}>{r.category === "Poulet" ? "🍗" : r.category === "Boeuf" ? "🥩" : r.category === "Porc" ? "🐷" : "🍽️"}</span>
-                              <span style={{ fontSize: 14, fontFamily: "Georgia, serif", fontWeight: 500, flex: 1 }}>{r.name}</span>
+                              <span style={{ fontSize: 14, fontFamily: "'Fraunces', Georgia, serif", fontWeight: 500, flex: 1 }}>{r.name}</span>
                               {weekPlan[planPickingDay] && weekPlan[planPickingDay].id === r.id && <span style={{ color: COLORS.terracotta }}>✓</span>}
                             </div>
                           ));
@@ -3504,7 +3580,7 @@ export default function BatchCooking() {
             <div>
               <div style={{ marginBottom: 24 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: COLORS.terracotta, marginBottom: 6 }}>Archives</div>
-                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 500, fontFamily: "Georgia, serif" }}>Semaines et courses passées</h2>
+                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Semaines et courses passées</h2>
               </div>
 
               {weekHistory.length === 0 && savedShoppingLists.length === 0 ? (
@@ -3518,7 +3594,7 @@ export default function BatchCooking() {
                       <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: COLORS.inkMuted, marginBottom: 12 }}>Menus de la semaine</div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                         {[...weekHistory].reverse().map((entry, i) => (
-                          <div key={entry.dbId || entry.localId || i} style={{ background: COLORS.card, borderRadius: 14, padding: 18, border: `1px solid ${COLORS.line}` }}>
+                          <div key={entry.dbId || entry.localId || i} style={{ background: COLORS.card, borderRadius: 16, padding: 18, border: `1px solid ${COLORS.line}`, boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                               <div style={{ flex: 1, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: COLORS.terracotta }}>{entry.week}</div>
                               <button onClick={() => setConfirmDelete({ type: "week", item: entry })} style={{
@@ -3529,7 +3605,7 @@ export default function BatchCooking() {
                             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
                               {entry.recipes.map((r, j) => (
                                 <div key={j} style={{ display: "flex", alignItems: "center", fontSize: 14, color: COLORS.inkSoft }}>
-                                  <span style={{ flex: 1, fontFamily: "Georgia, serif" }}>{r.name}</span>
+                                  <span style={{ flex: 1, fontFamily: "'Fraunces', Georgia, serif" }}>{r.name}</span>
                                   <span style={{ fontSize: 12, color: COLORS.inkMuted }}>{r.servings} pers.</span>
                                 </div>
                               ))}
@@ -3549,11 +3625,11 @@ export default function BatchCooking() {
                           const recipeNames = entry.recipes ? entry.recipes.map(r => typeof r === "string" ? r : r.name).join(", ") : "";
                           return (
                             <div key={i} style={{
-                              background: COLORS.card, borderRadius: 14, padding: 18, border: `1px solid ${COLORS.line}`,
+                              background: COLORS.card, borderRadius: 16, padding: 18, border: `1px solid ${COLORS.line}`, boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
                               display: "flex", alignItems: "center", gap: 14,
                             }}>
                               <div onClick={() => setViewingShoppingList(entry)} style={{ flex: 1, cursor: "pointer" }}>
-                                <div style={{ fontWeight: 600, fontSize: 15, fontFamily: "Georgia, serif", marginBottom: 4 }}>{entry.label}</div>
+                                <div style={{ fontWeight: 600, fontSize: 15, fontFamily: "'Fraunces', Georgia, serif", marginBottom: 4 }}>{entry.label}</div>
                                 <div style={{ fontSize: 12, color: COLORS.inkMuted }}>{itemCount} article{itemCount > 1 ? "s" : ""} · {recipeNames}</div>
                               </div>
                               <button onClick={e => { e.stopPropagation(); setConfirmDelete({ type: "list", item: entry }); }} style={{
@@ -3577,7 +3653,7 @@ export default function BatchCooking() {
             <div>
               <div style={{ marginBottom: 24 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: COLORS.terracotta, marginBottom: 6 }}>Nouvelle recette</div>
-                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 500, fontFamily: "Georgia, serif" }}>Ajouter au carnet</h2>
+                <h2 style={{ margin: 0, fontSize: 22, fontWeight: 500, fontFamily: "'Fraunces', Georgia, serif" }}>Ajouter au carnet</h2>
               </div>
 
               <div style={{ marginBottom: 16 }}>
