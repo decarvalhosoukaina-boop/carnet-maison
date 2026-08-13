@@ -3135,7 +3135,6 @@ export default function BatchCooking() {
                     const data = await resp.json();
                     if (data.success) {
                       setBringStatus("done");
-                      setOwnedIngredients({});
                       setTimeout(() => setBringStatus("idle"), 3000);
                     } else {
                       setBringStatus("error");
@@ -3223,6 +3222,7 @@ export default function BatchCooking() {
               <button onClick={() => {
                 const finalList = { ...activeShoppingList, list: liveList, recipes: liveRecipes.map(r => ({ id: r.id, name: r.name, servings: recipeServings[r.id] || r.servings })) };
                 setSavedShoppingLists(prev => [...prev, finalList]);
+                setOwnedIngredients({});
                 setWeekStatus("cooking");
                 setView("home");
               }} style={{
@@ -3419,6 +3419,7 @@ export default function BatchCooking() {
                 setManualItems([]);
                 setSelected([]);
                 setRecipeServings({});
+                setWeekPlan({ Lun: null, Mar: null, Mer: null, Jeu: null, Ven: null });
                 setShowSuggestion(true);
                 try {
                   const saved = await db.insert("week_history", {
