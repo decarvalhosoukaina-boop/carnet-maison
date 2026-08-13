@@ -3135,6 +3135,7 @@ export default function BatchCooking() {
                     const data = await resp.json();
                     if (data.success) {
                       setBringStatus("done");
+                      setOwnedIngredients({});
                       setTimeout(() => setBringStatus("idle"), 3000);
                     } else {
                       setBringStatus("error");
