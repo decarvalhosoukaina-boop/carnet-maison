@@ -2307,7 +2307,12 @@ export default function BatchCooking() {
                   setDetailRecipe(null);
                   try { await db.delete("recipes", confirmDelete.item.id); } catch(e) {}
                 } else if (confirmDelete.type === "week") {
-                  setWeekHistory(prev => prev.filter(w => !(w.week === confirmDelete.item.week && w.date === confirmDelete.item.date)));
+                  const target = confirmDelete.item;
+                  setWeekHistory(prev => prev.filter(w => {
+                    if (target.dbId) return w.dbId !== target.dbId;
+                    if (target.localId) return w.localId !== target.localId;
+                    return w !== target;
+                  }));
                   try { if (confirmDelete.item.dbId) await db.delete("week_history", confirmDelete.item.dbId); } catch(e) {}
                 } else {
                   setSavedShoppingLists(prev => prev.filter(l => l.label !== confirmDelete.item.label));
@@ -3148,6 +3153,14 @@ export default function BatchCooking() {
                 </button>
               </div>
 
+              {/* Reset checked items */}
+              {Object.keys(ownedIngredients).some(k => ownedIngredients[k]) && (
+                <button onClick={() => setOwnedIngredients({})} style={{
+                  width: "100%", padding: 11, borderRadius: 10, border: `1px solid ${COLORS.line}`,
+                  background: "transparent", color: COLORS.inkMuted, fontWeight: 500, fontSize: 13, cursor: "pointer", marginBottom: 16,
+                }}>↺ Tout décocher (repartir de zéro)</button>
+              )}
+
               {/* Manual items section */}
               <div style={{ background: COLORS.card, borderRadius: 14, padding: 18, marginBottom: 16, border: `1px solid ${COLORS.line}` }}>
                 <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: COLORS.inkMuted, marginBottom: 12 }}>
@@ -3391,7 +3404,9 @@ export default function BatchCooking() {
               </div>
 
               <button onClick={async () => {
+                const localId = `week-${Date.now()}`;
                 const newEntry = {
+                  localId,
                   recipes: selected.map(r => ({ id: r.id, name: r.name, servings: recipeServings[r.id] || r.servings })),
                   date: new Date().toLocaleDateString("fr-FR"),
                   week: `Semaine ${Math.ceil(new Date().getDate() / 7)} — ${new Date().toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}`,
@@ -3399,13 +3414,20 @@ export default function BatchCooking() {
                 setWeekHistory(prev => [...prev, newEntry]);
                 setWeekStatus("idle");
                 setActiveShoppingList(null);
+                setOwnedIngredients({});
+                setManualItems([]);
+                setSelected([]);
+                setRecipeServings({});
                 setShowSuggestion(true);
                 try {
-                  await db.insert("week_history", {
+                  const saved = await db.insert("week_history", {
                     week_label: newEntry.week,
                     date: newEntry.date,
                     recipes: newEntry.recipes,
                   });
+                  if (saved && saved[0]) {
+                    setWeekHistory(prev => prev.map(w => w.localId === localId ? { ...w, dbId: saved[0].id } : w));
+                  }
                 } catch (e) { console.error("Save week error:", e); }
               }} style={{
                 width: "100%", padding: 15, borderRadius: 10, border: "none",
@@ -3494,7 +3516,7 @@ export default function BatchCooking() {
                       <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: COLORS.inkMuted, marginBottom: 12 }}>Menus de la semaine</div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                         {[...weekHistory].reverse().map((entry, i) => (
-                          <div key={i} style={{ background: COLORS.card, borderRadius: 14, padding: 18, border: `1px solid ${COLORS.line}` }}>
+                          <div key={entry.dbId || entry.localId || i} style={{ background: COLORS.card, borderRadius: 14, padding: 18, border: `1px solid ${COLORS.line}` }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
                               <div style={{ flex: 1, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase", color: COLORS.terracotta }}>{entry.week}</div>
                               <button onClick={() => setConfirmDelete({ type: "week", item: entry })} style={{
