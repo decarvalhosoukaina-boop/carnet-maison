@@ -83,15 +83,25 @@ export default async function handler(req, res) {
     // ÉTAPE 3 — Ajouter chaque article
     let added = 0;
     for (const item of items) {
-      // Séparer quantité et nom si possible (ex: "200 g Chorizo" -> name="Chorizo", spec="200 g")
-      const name = String(item).trim();
+      // item arrive sous la forme { name, spec } depuis l'app
+      let name, spec;
+      if (typeof item === "object" && item !== null) {
+        name = String(item.name || "").trim();
+        spec = String(item.spec || "").trim();
+      } else {
+        name = String(item).trim();
+        spec = "";
+      }
+      if (!name) continue;
+      const params = { purchase: name };
+      if (spec) params.specification = spec;
       const addRes = await fetch(`${BRING_API}/bringlists/${listUuid}`, {
         method: "PUT",
         headers: {
           ...authHeaders,
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({ purchase: name }).toString(),
+        body: new URLSearchParams(params).toString(),
       });
       if (addRes.ok) added++;
     }
