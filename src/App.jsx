@@ -3114,11 +3114,13 @@ export default function BatchCooking() {
                     });
                   });
                   manualItems.filter(m => !m.done).forEach(m => lines.push(m.name));
-                  const text = "Ma liste de courses :\n" + lines.join("\n");
+                  // Build a link to our recipe-page that Bring! can scan
+                  const itemsParam = encodeURIComponent(lines.join("|"));
+                  const url = `${window.location.origin}/api/liste?title=${encodeURIComponent("Liste de courses")}&items=${itemsParam}`;
                   if (navigator.share) {
-                    try { await navigator.share({ title: "Liste de courses", text }); } catch(e) {}
+                    try { await navigator.share({ title: "Liste de courses", url }); } catch(e) {}
                   } else {
-                    navigator.clipboard.writeText(text);
+                    navigator.clipboard.writeText(url);
                     setCopyFeedback(true);
                     setTimeout(() => setCopyFeedback(false), 2000);
                   }
