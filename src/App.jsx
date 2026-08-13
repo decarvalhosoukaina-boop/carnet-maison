@@ -3042,15 +3042,19 @@ export default function BatchCooking() {
 
           {/* SHOPPING VIEW — the list to take to the store, revisited over several days */}
           {view === "shopping" && activeShoppingList && (() => {
-            // Regenerate the list live from current selection so it stays in sync
-            const liveList = selected.length > 0 ? buildShoppingList(selected, recipeServings) : activeShoppingList.list;
-            const liveRecipes = selected.length > 0 ? selected : activeShoppingList.recipes;
+            // Regenerate the list live from current selection so it stays in sync.
+            // If nothing is selected anymore, the list is genuinely empty.
+            const liveList = buildShoppingList(selected, recipeServings);
+            const liveRecipes = selected.length > 0 ? selected : [];
+            const hasItems = Object.keys(liveList).length > 0;
             return (
             <div>
               <div style={{ marginBottom: 24 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: COLORS.terracotta, marginBottom: 6 }}>Étape 2 sur 3</div>
                 <h2 style={{ margin: "0 0 6px", fontSize: 22, fontWeight: 500, fontFamily: "Georgia, serif" }}>Liste de courses</h2>
-                <p style={{ fontSize: 14, color: COLORS.inkMuted, margin: 0 }}>Pour {liveRecipes.map(r => r.name).join(", ")}</p>
+                <p style={{ fontSize: 14, color: COLORS.inkMuted, margin: 0 }}>
+                  {liveRecipes.length > 0 ? `Pour ${liveRecipes.map(r => r.name).join(", ")}` : "Aucune recette sélectionnée"}
+                </p>
               </div>
 
               <div style={{ background: COLORS.card, borderRadius: 14, padding: 20, marginBottom: 20, border: `1px solid ${COLORS.line}` }}>
