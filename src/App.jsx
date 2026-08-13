@@ -3111,10 +3111,10 @@ export default function BatchCooking() {
                   const lines = [];
                   Object.entries(liveList).forEach(([category, items]) => {
                     items.forEach(item => {
-                      if (!ownedIngredients[item.key]) lines.push(`${item.qtyDisplay} ${item.name}`.trim());
+                      if (!ownedIngredients[item.key]) lines.push({ name: item.name, spec: item.qtyDisplay || "" });
                     });
                   });
-                  manualItems.filter(m => !m.done).forEach(m => lines.push(m.name));
+                  manualItems.filter(m => !m.done).forEach(m => lines.push({ name: m.name, spec: "" }));
                   if (lines.length === 0) return;
                   setBringStatus("sending");
                   try {
