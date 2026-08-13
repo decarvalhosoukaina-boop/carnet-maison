@@ -2754,10 +2754,15 @@ export default function BatchCooking() {
           <div style={{ fontSize: 28 }}>🥘</div>
         </div>
 
-        {/* Tabs — icon cards (hidden on home, where big cards handle navigation) */}
+        {/* Floating bottom navigation (hidden on home, where big cards navigate) */}
         {view !== "home" && (
-        <div style={{ background: COLORS.cream, position: "sticky", top: 0, zIndex: 10, padding: "12px 16px 0", borderBottom: `1px solid ${COLORS.line}` }}>
-          <div style={{ display: "flex", gap: 8, maxWidth: 700, margin: "0 auto", justifyContent: "space-between" }}>
+        <div style={{
+          position: "fixed", bottom: 16, left: "50%", transform: "translateX(-50%)",
+          zIndex: 50, background: "rgba(255,255,255,0.92)", backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)", borderRadius: 22, padding: "8px 8px",
+          boxShadow: "0 8px 30px rgba(0,0,0,0.14)", border: `1px solid ${COLORS.line}`,
+          display: "flex", gap: 2, maxWidth: "calc(100% - 24px)",
+        }}>
             {[
               { key: "home",     label: "Accueil",  icon: "🏠" },
               { key: "select",   label: "Recettes", icon: "📖" },
@@ -2779,28 +2784,25 @@ export default function BatchCooking() {
               };
               return (
                 <button key={tab.key} onClick={handleClick} style={{
-                  flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-                  padding: "8px 4px 10px", border: "none", borderRadius: "12px 12px 0 0",
-                  background: isActive ? COLORS.card : "transparent",
-                  boxShadow: isActive ? `0 -2px 8px rgba(0,0,0,0.06)` : "none",
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
+                  padding: "8px 10px", border: "none", borderRadius: 16,
+                  background: isActive ? COLORS.terracottaSoft : "transparent",
                   cursor: isDisabled ? "not-allowed" : "pointer",
-                  borderBottom: isActive ? `2px solid ${COLORS.terracotta}` : "2px solid transparent",
-                  transition: "all 0.15s",
+                  transition: "all 0.15s", minWidth: 52,
                 }}>
-                  <span style={{ fontSize: 20, filter: isDisabled ? "grayscale(1) opacity(0.3)" : isActive ? "none" : "opacity(0.5)" }}>{tab.icon}</span>
+                  <span style={{ fontSize: 19, filter: isDisabled ? "grayscale(1) opacity(0.3)" : isActive ? "none" : "opacity(0.55)" }}>{tab.icon}</span>
                   <span style={{
-                    fontSize: 10, fontWeight: isActive ? 600 : 400, letterSpacing: "0.02em",
+                    fontSize: 9, fontWeight: isActive ? 600 : 400, letterSpacing: "0.01em",
                     color: isDisabled ? COLORS.line : isActive ? COLORS.terracotta : COLORS.inkMuted,
                     fontFamily: "'Helvetica Neue', sans-serif",
                   }}>{tab.label}</span>
                 </button>
               );
             })}
-          </div>
         </div>
         )}
 
-        <div style={{ maxWidth: 700, margin: "0 auto", padding: "28px 24px 80px", fontFamily: "'Helvetica Neue', sans-serif" }}>
+        <div style={{ maxWidth: 700, margin: "0 auto", padding: "28px 24px 110px", fontFamily: "'Helvetica Neue', sans-serif" }}>
 
           {/* HOME VIEW — entry point showing where the person is in the journey */}
           {view === "home" && (
