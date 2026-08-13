@@ -1897,6 +1897,7 @@ export default function BatchCooking() {
   const [editingRecipe, setEditingRecipe] = useState(null); // recipe being edited
   const [adjustingRecipe, setAdjustingRecipe] = useState(null); // recipe whose quantities are being tuned
   const [confirmDelete, setConfirmDelete] = useState(null); // { type: "recipe"|"list", item }
+  const [copyFeedback, setCopyFeedback] = useState(false);
   // weekStatus tracks where the person is in the real-life journey:
   // "planning" -> choosing recipes, "shopping" -> list generated, waiting to shop,
   // "cooking" -> groceries done, ready to batch cook, "idle" -> nothing active
@@ -3083,6 +3084,48 @@ export default function BatchCooking() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Bring! export buttons */}
+              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                <button onClick={() => {
+                  const lines = [];
+                  Object.entries(liveList).forEach(([category, items]) => {
+                    items.forEach(item => {
+                      if (!ownedIngredients[item.key]) lines.push(`${item.qtyDisplay} ${item.name}`.trim());
+                    });
+                  });
+                  manualItems.filter(m => !m.done).forEach(m => lines.push(m.name));
+                  const text = lines.join("\n");
+                  navigator.clipboard.writeText(text).then(() => {
+                    setCopyFeedback(true);
+                    setTimeout(() => setCopyFeedback(false), 2000);
+                  });
+                }} style={{
+                  flex: 1, padding: 13, borderRadius: 10, border: `1px solid ${COLORS.line}`,
+                  background: copyFeedback ? COLORS.sageSoft : COLORS.card, color: copyFeedback ? "#4a5640" : COLORS.inkSoft,
+                  fontWeight: 500, fontSize: 14, cursor: "pointer",
+                }}>{copyFeedback ? "✓ Copié !" : "📋 Copier la liste"}</button>
+                <button onClick={async () => {
+                  const lines = [];
+                  Object.entries(liveList).forEach(([category, items]) => {
+                    items.forEach(item => {
+                      if (!ownedIngredients[item.key]) lines.push(`${item.qtyDisplay} ${item.name}`.trim());
+                    });
+                  });
+                  manualItems.filter(m => !m.done).forEach(m => lines.push(m.name));
+                  const text = "Ma liste de courses :\n" + lines.join("\n");
+                  if (navigator.share) {
+                    try { await navigator.share({ title: "Liste de courses", text }); } catch(e) {}
+                  } else {
+                    navigator.clipboard.writeText(text);
+                    setCopyFeedback(true);
+                    setTimeout(() => setCopyFeedback(false), 2000);
+                  }
+                }} style={{
+                  flex: 1, padding: 13, borderRadius: 10, border: "none",
+                  background: COLORS.terracotta, color: "#fff", fontWeight: 500, fontSize: 14, cursor: "pointer",
+                }}>📤 Partager vers Bring!</button>
               </div>
 
               {/* Manual items section */}
